@@ -1,0 +1,34 @@
+# Dependencies and generated builds
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Environment files: only sanitized examples belong in Git
+.env*
+!.env.example
+
+# Deployment metadata, credentials and private keys
+.vercel/
+.netlify/
+.aws/
+.secrets/
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+
+# Logs and local tooling
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
+*~

@@ -1,0 +1,7 @@
+.bundle-purchase-actions {display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+.bundle-purchase-actions > .primary {flex:1 1 180px;gap:10px;border-radius:10px;min-height:48px;padding:13px 16px;}
+.bundle-purchase-actions > .buy-now {background:#dce8a0;color:#183c32;border:1px solid #c5d585;}
+.bundle-purchase-actions > .buy-now:hover:not(:disabled) {background:#cbdc8d;}
+.bundle-purchase-actions > .success {flex-basis:100%;font-size:13px;}
+.product-info .bundle-purchase-actions {gap:8px;}
+.product-info .bundle-purchase-actions > .primary {flex-basis:100%;font-size:12px;}

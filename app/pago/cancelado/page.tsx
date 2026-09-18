@@ -1,0 +1,3 @@
+import Link from 'next/link';
+export const metadata={title:'Pago interrumpido',robots:{index:false,follow:false}};
+export default function Page(){return <main id="contenido" className="section"><div className="order-summary" style={{maxWidth:600,margin:'auto'}}><h1 style={{fontSize:32}}>Volviste sin finalizar Checkout</h1><p>Tu carrito y tu pedido se conservan. Puedes retomar la misma sesión desde «Pagar ahora» o continuar por WhatsApp. Si ya autorizaste un pago, espera su confirmación antes de intentarlo por otro medio.</p><Link className="primary" href="/carrito">Volver a mi carrito</Link></div></main>;}

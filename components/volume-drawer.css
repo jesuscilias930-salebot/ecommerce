@@ -1,0 +1,214 @@
+.product-group-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 20px;
+    background: #e9eddd;
+    color: #183c32;
+    font-size: 10px;
+    margin: 0 0 8px
+}
+
+.original-tiers tr.tier-applied td {
+    background: #dce8a0;
+    color: #183c32;
+    font-weight: 700;
+    transition: background .25s
+}
+
+.original-current {
+    border: 1px solid #dedfd6;
+    transition: background .25s
+}
+
+.original-current small {
+    display: block;
+    color: #6c7770;
+    margin-top: 6px;
+    font-size: 10px
+}
+
+.card-saving {
+    font-size: 11px;
+    background: #edf0e6;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 0 0 12px;
+    line-height: 1.5
+}
+
+.card-saving progress {
+    width: 100%;
+    accent-color: #296c51;
+    height: 7px
+}
+
+.card-saving small {
+    font-size: 9px;
+    color: #6c7770
+}
+
+.volume-launcher {
+    position: fixed;
+    bottom: 12px;
+    left: 6%;
+    right: 6%;
+    z-index: 25;
+    background: #183c32;
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 30px #183c3230;
+    padding: 16px 22px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px
+}
+
+.volume-launcher strong,
+.volume-launcher span,
+.volume-launcher small {
+    display: block
+}
+
+.volume-launcher strong {
+    font-size: 25px;
+    margin: 5px 0
+}
+
+.volume-launcher span,
+.volume-launcher small {
+    font-size: 11px
+}
+
+.volume-launcher button {
+    background: #dce8a0;
+    color: #183c32
+}
+
+.volume-drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(540px, 100%);
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    padding: 20px;
+    background: #faf9f6;
+    color: #183c32;
+    overflow-y: auto;
+    box-shadow: -10px 0 40px #183c3220
+}
+
+.volume-drawer::backdrop {
+    background: #10271e70
+}
+
+.volume-drawer[open] {
+    animation: drawer-slide .2s ease-out
+}
+
+.drawer-close {
+    display: block;
+    margin-left: auto;
+    background: white;
+    border: 1px solid #dedfd6;
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: #183c32
+}
+
+.volume-drawer .live-summary {
+    margin: 15px 0;
+    padding: 0;
+    border: 0;
+    background: transparent
+}
+
+.volume-drawer .live-groups {
+    grid-template-columns: 1fr
+}
+
+.volume-drawer .live-group {
+    background: white
+}
+
+.volume-drawer .live-total {
+    position: static;
+    margin: 18px 0;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch
+}
+
+.volume-drawer .live-total strong {
+    font-size: 28px
+}
+
+.group-unit-price {
+    font-size: 12px;
+    color: #296c51;
+    margin: 10px 0
+}
+
+.volume-drawer .live-tag {
+    display: none
+}
+
+body:has(.volume-launcher) {
+    padding-bottom: 145px
+}
+
+body:has(.volume-drawer[open]) {
+    overflow: hidden
+}
+
+@keyframes drawer-slide {
+    from {
+        transform: translateX(30px);
+        opacity: 0
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .volume-drawer[open] {
+        animation: none
+    }
+
+    .original-tiers tr.tier-applied td {
+        transition: none
+    }
+}
+
+@media(max-width:600px) {
+    .volume-launcher {
+        left: 10px;
+        right: 10px;
+        padding: 12px;
+        gap: 8px
+    }
+
+    .volume-launcher strong {
+        font-size: 20px
+    }
+
+    .volume-launcher button {
+        padding: 12px;
+        font-size: 10px
+    }
+
+    .volume-launcher small {
+        font-size: 9px
+    }
+
+    .volume-drawer {
+        padding: 16px
+    }
+}
