@@ -1,5 +1,5 @@
 'use client';
-import {useContext,useRef,useState} from 'react';
+import {useContext,useEffect,useRef,useState} from 'react';
 import {Context} from './shop';
 import {money} from '@/lib/money';
 import {ShippingAddress,validateAddress} from '@/lib/shipping-address';
@@ -10,6 +10,21 @@ type Receipt={body:string;folio:string;whatsappUrl:string;subtotal:number};
 const STORAGE_KEY='merlyn-pending-checkout-v1';
 export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReason?:string;addressPage?:boolean;shipping?:ShippingEstimate|null}) {
  const router=useRouter();
+ const [cardPaymentsEnabled,setCardPaymentsEnabled]=useState(false);
+ useEffect(()=>{
+  let active=true;
+  let controller:AbortController|undefined;
+  const refresh=async()=>{
+   controller?.abort(); controller=new AbortController();
+   try {
+    const response=await fetch('/api/store-features',{cache:'no-store',signal:controller.signal});
+    const data=response.ok?await response.json():null;
+    if(active)setCardPaymentsEnabled(data?.cardPaymentsEnabled===true);
+   } catch(e) {if(active&&!(e instanceof Error&&e.name==='AbortError'))setCardPaymentsEnabled(false);}
+  };
+  void refresh(); window.addEventListener('focus',refresh);
+  return ()=>{active=false;controller?.abort();window.removeEventListener('focus',refresh);};
+ },[]);
  const {lines}=useContext(Context);
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const [receipt,setReceipt]=useState<Receipt|null>(null);
@@ -21,6 +36,7 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
  });
  const current=receipt?.body===body?receipt:null;
  async function complete(payment: 'stripe' | 'whatsapp' = 'whatsapp') {
+  if(payment==='stripe'&&!cardPaymentsEnabled)return;
   if(lock.current||blockedReason||!lines.length)return;
   if(current&&payment==='whatsapp'){window.location.assign(current.whatsappUrl);return;}
   lock.current=true;setBusy(true);setError('');
@@ -60,10 +76,10 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
   finally{lock.current=false;setBusy(false);}
  }
  return <section aria-label="Concluir pedido" className="checkout-actions">
-  {!addressPage&&<><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length} onClick={()=>router.push('/checkout')}>Pagar ahora · Completar dirección →</button><small>En el siguiente paso eliges dónde recibirlo y cuánto cuesta el envío. Sin crear una cuenta.</small></>}
-  {addressPage&&<><p className="checkout-explanation">{shipping?'Dirección y envío listos. Revisa tu total antes de continuar.':'Completa tu dirección y elige un envío para continuar.'}</p><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length||!shipping} onClick={()=>void complete('stripe')}>{busy?'Preparando pago…':'Continuar al pago seguro →'}</button><small>El pago se confirma en Stripe. Todavía no se realizará ningún cargo.</small></>}
-  <span className="checkout-or">o</span>
-  <button type="button" className="checkout-secondary" disabled={busy||!!blockedReason||!lines.length} onClick={()=>void complete()}>{busy?'Procesando…':current?'Abrir WhatsApp con mi pedido':'Prefiero concluir por WhatsApp'}</button>
+  {cardPaymentsEnabled&&!addressPage&&<><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length} onClick={()=>router.push('/checkout')}>Pagar ahora · Completar dirección →</button><small>En el siguiente paso eliges dónde recibirlo y cuánto cuesta el envío. Sin crear una cuenta.</small></>}
+  {cardPaymentsEnabled&&addressPage&&<><p className="checkout-explanation">{shipping?'Dirección y envío listos. Revisa tu total antes de continuar.':'Completa tu dirección y elige un envío para continuar.'}</p><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length||!shipping} onClick={()=>void complete('stripe')}>{busy?'Preparando pago…':'Continuar al pago seguro →'}</button><small>El pago se confirma en Stripe. Todavía no se realizará ningún cargo.</small></>}
+  {cardPaymentsEnabled&&<span className="checkout-or">o</span>}
+  <button type="button" className={cardPaymentsEnabled?'checkout-secondary':'primary'} disabled={busy||!!blockedReason||!lines.length} onClick={()=>void complete()}>{busy?'Procesando…':current?'Abrir WhatsApp con mi pedido':'Concluir pedido por WhatsApp'}</button>
   {current&&<div role="status"><b style={{overflowWrap:'anywhere'}}>Pedido registrado: {current.folio}</b><p>Subtotal registrado: {money(current.subtotal)} MXN.</p><a href={current.whatsappUrl}>Si WhatsApp no abrió, pulsa aquí</a></div>}
   {blockedReason&&<small role="status">{blockedReason}</small>}
   {error&&<p role="alert">{error}</p>}

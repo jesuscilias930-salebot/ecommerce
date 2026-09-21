@@ -1,6 +1,7 @@
 import {stockApi,isProductDemo} from '@/lib/product-catalog';
 import {getCatalog} from '@/lib/catalog';
 import {validateAddress} from '@/lib/shipping-address';
+import {getStoreFeatures} from '@/lib/store-features';
 
 const SALES_NUMBER='522721285563';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -10,6 +11,7 @@ export async function POST(request:Request) {
   const raw=await request.text();
   if(raw.length>20000)return Response.json({error:'Pedido demasiado grande'},{status:413});
   const b=JSON.parse(raw);
+  if(b?.payment==='stripe'&&!(await getStoreFeatures()).cardPaymentsEnabled)return Response.json({error:'Los pagos con tarjeta no están disponibles. Concluye tu pedido por WhatsApp.'},{status:403});
   let shippingAddress;
   try{if(b.payment==='stripe'||b.shippingAddress)shippingAddress=validateAddress(b.shippingAddress);}catch(e){return Response.json({error:e instanceof Error?e.message:'Dirección inválida'},{status:400});}
   if(b?.payment!==undefined&&b.payment!=='stripe'&&b.payment!=='whatsapp')throw Error('Invalid payment');
