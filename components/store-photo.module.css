@@ -7,7 +7,18 @@
 @media(hover:hover) and (pointer:fine) {
  .zoomable {cursor:zoom-in;}
  .hint {display:block;}
- .zoomable:hover .surface {transform:scale(2.4);}
+ .zoomable .slide:hover .surface {transform:scale(2.4);}
  .zoomable:hover .hint {opacity:0;}
 }
 @media(prefers-reduced-motion:reduce){.surface {transition:none;}}
+.track {display:flex;width:100%;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;}
+.track::-webkit-scrollbar {display:none;}
+.track:focus-visible {outline:3px solid #1c513e;outline-offset:-3px;}
+.slide {flex:0 0 100%;width:100%;height:100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;}
+.frame .arrow {position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;min-width:40px;padding:0;border:1px solid #dedfd6;border-radius:50%;background:#fffffff2;color:#183c32;box-shadow:0 2px 8px #0002;font-size:28px;line-height:1;cursor:pointer;display:grid;place-items:center;}
+.frame .arrow:disabled {opacity:.35;cursor:default;}
+.arrow:focus-visible {outline:3px solid #1c513e;outline-offset:2px;}
+.previous {left:8px;}.next {right:8px;}
+.counter {position:absolute;top:10px;right:12px;background:#fffffff2;color:#183c32;padding:4px 10px;border-radius:20px;font-size:12px;pointer-events:none;}
+.hint {bottom:42px;}
+:global(.original-visual) > .frame {height:100%;aspect-ratio:auto;border-radius:0;}

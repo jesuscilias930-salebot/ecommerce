@@ -203,7 +203,7 @@ function OriginalCard({
     <article className="original-product">
       <div className="original-visual">
         <span className="original-watermark">MERLYN / ORIGINALES</span>
-        <StorePhoto src={p.imageUrl} name={p.name}><SockVisual product={p} /></StorePhoto>
+        <StorePhoto images={p.imageUrls} src={p.imageUrl} name={p.name}><SockVisual product={p} /></StorePhoto>
         <span className={`original-stock ${p.currentStock ? "" : "sold-out"}`}>
           {p.currentStock ? `${p.currentStock} disponibles` : "Agotado"}
         </span>

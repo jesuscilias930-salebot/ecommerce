@@ -158,13 +158,13 @@ export function AddButton({ item }: { item: Package }) {
 export function Card({ item }: { item: Package }) {
   return (
     <article className="product-card">
-      <Link href={`/paquetes/${item.id}`} className="product-visual">
-        <StorePhoto src={item.imageUrl} name={item.name}><BoxArt tone={item.tone} /></StorePhoto>
+      <div className="product-visual">
+        <StorePhoto images={item.imageUrls} src={item.imageUrl} name={item.name}><BoxArt tone={item.tone} /></StorePhoto>
         <span className="product-badge">{item.pieces} piezas</span>
-        <span className="round-arrow">
+        <Link href={`/paquetes/${item.id}`} aria-label={`Ver ${item.name}`} className="round-arrow">
           <ArrowUpRight size={21} />
-        </span>
-      </Link>
+        </Link>
+      </div>
       <div className="product-info">
         <span className="eyebrow">PAQUETE DE MAYOREO</span>
         <Link href={`/paquetes/${item.id}`}>
