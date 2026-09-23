@@ -18,6 +18,7 @@ import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
 import { BoxArt } from "./box-art";
 import { StorePhoto } from "./store-photo";
+import { BundleDescription } from "./bundle-description";
 import "./purchase-actions.css";
 type Line = { id: number; quantity: number };
 export const Context = createContext<{
@@ -170,7 +171,8 @@ export function Card({ item }: { item: Package }) {
         <Link href={`/paquetes/${item.id}`}>
           <h3>{item.name}</h3>
         </Link>
-        <p>{item.items.map((i) => i.name).join(" · ")}</p>
+        <BundleDescription text={item.description}/>
+        {!item.description?.trim()&&<p>{item.items.map((i) => i.name).join(" · ")}</p>}
         <div className="price-row">
           <b>
             {money(item.price)} <small>MXN</small>
