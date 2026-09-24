@@ -1,6 +1,6 @@
 import 'server-only';
 import {getStoreTenant} from '@/lib/store-tenant';
-import styles from './store-trust.module.css';
+import {TestimonialGallery} from './testimonial-gallery';
 type Photo={id:number;url:string};
 export async function TestimonialPhotos({limit}:{limit?:number}) {
  let photos:Photo[]=[];
@@ -14,5 +14,5 @@ export async function TestimonialPhotos({limit}:{limit?:number}) {
   if(Array.isArray(data)) photos=data.filter((p):p is Photo=>p&&typeof p.id==='number'&&typeof p.url==='string'&&p.url.startsWith('https://'));
  }catch{return null;}
  if(!photos.length)return null;
- return <div><h2>Fotografías compartidas por nuestros clientes</h2><p>Publicadas con autorización. Abre una fotografía para verla completa.</p><div className={styles.grid}>{photos.slice(0,limit??photos.length).map((photo,i)=><figure className={styles.card} key={photo.id}><a href={photo.url} target="_blank" rel="noopener noreferrer"><img src={photo.url} alt={`Referencia de compra ${i+1}`} loading="lazy" style={{objectFit:'contain'}}/></a></figure>)}</div></div>;
+ return <div><h2>Fotografías compartidas por nuestros clientes</h2><p>Publicadas con autorización. Toca una captura para ampliarla y leerla completa.</p><TestimonialGallery photos={photos.slice(0,limit??photos.length)}/></div>;
 }

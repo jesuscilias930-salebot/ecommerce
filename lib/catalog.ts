@@ -1,12 +1,13 @@
 import 'server-only';
+import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
 export type Package = { description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; price: number; available: number; pieces: number; boxLengthCm?:number|null; boxWidthCm?:number|null; boxHeightCm?:number|null; boxWeightKg?:number|null; items: { id?:number; productId?:number; name: string; quantity: number; assignedUnitPrice?:number|null }[]; tone: number };
-type Bundle = { description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; fixedPrice: number | string; boxLengthCm?:number|string|null; boxWidthCm?:number|string|null; boxHeightCm?:number|string|null; boxWeightKg?:number|string|null; items: { id?:number; productId: number; productName: string; quantity: number; assignedUnitPrice?:number|string|null }[] };
+type Bundle = { description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; fixedPrice: number | string; boxLengthCm?:number|string|null; boxWidthCm?:number|string|null; boxHeightCm?:number|string|null; boxWeightKg?:number|string|null; items: { id?:number; productId: number; productName: string; category?:string|null; gender?:string|null; quantity: number; assignedUnitPrice?:number|string|null }[] };
 type Product = { id: number; currentStock: number };
 const numberOrNull=(value:unknown)=>value==null||value===''||!Number.isFinite(Number(value))?null:Number(value);
 const bundleDetails=(b:Bundle)=>({description:b.description,imageUrl:b.imageUrl,imageUrls:b.imageUrls,
  boxLengthCm:numberOrNull(b.boxLengthCm),boxWidthCm:numberOrNull(b.boxWidthCm),boxHeightCm:numberOrNull(b.boxHeightCm),boxWeightKg:numberOrNull(b.boxWeightKg),
- items:b.items.map(i=>({id:i.id,productId:i.productId,name:i.productName,quantity:i.quantity,assignedUnitPrice:numberOrNull(i.assignedUnitPrice)}))
+ items:b.items.map(i=>({id:i.id,productId:i.productId,name:productDisplayName({name:i.productName,category:i.category,gender:i.gender}),quantity:i.quantity,assignedUnitPrice:numberOrNull(i.assignedUnitPrice)}))
 });
 const demoBundles:Bundle[]=[
  {id:1,name:'Tu primer negocio',fixedPrice:1290,boxLengthCm:30,boxWidthCm:25,boxHeightCm:20,boxWeightKg:2.4,items:[{id:1,productId:101,productName:'Calcetín caricatura dama',quantity:30,assignedUnitPrice:16},{id:2,productId:102,productName:'Calcetín caricatura caballero',quantity:30,assignedUnitPrice:16},{id:3,productId:103,productName:'Calcetín deportivo blanco',quantity:20,assignedUnitPrice:16.5}]},
