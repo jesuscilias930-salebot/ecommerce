@@ -22,6 +22,12 @@ export async function POST(request:Request) {
   if(b.payment==='stripe'&&b.products.length+b.bundles.length>100)return Response.json({error:'Stripe admite hasta 100 líneas por pedido. Continúa por WhatsApp.'},{status:400});
   const order=await stockApi(b.payment==='stripe'?'/public/store/checkout':'/public/store/orders',{
    requestId:b.requestId,
+   marketing:b.payment==='stripe'&&b.marketing?.consent===true?{
+    consent:true,
+    fbp:typeof b.marketing.fbp==='string'?b.marketing.fbp.slice(0,255):undefined,
+    fbc:typeof b.marketing.fbc==='string'?b.marketing.fbc.slice(0,255):undefined,
+    userAgent:(request.headers.get('user-agent')||'').slice(0,512)
+   }:undefined,
    shippingAddress,
    shippingQuoteToken:typeof b.shippingQuoteToken==='string'&&b.shippingQuoteToken.length<=2048?b.shippingQuoteToken:undefined,
    products:b.products.map((l:{productId:number;quantity:number})=>({productId:l.productId,quantity:l.quantity})),

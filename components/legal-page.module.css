@@ -1,0 +1,11 @@
+.page{max-width:900px;margin:auto;padding:48px 24px 80px;color:#183C32;overflow-wrap:anywhere}
+.page h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.12;margin:16px 0}
+.page h2{font-size:1.35rem;line-height:1.4;margin:0 0 12px}
+.page p,.page li{line-height:1.75}
+.page section{background:white;border:1px solid #DEDFD6;border-radius:18px;padding:24px;margin-top:18px}
+.page nav{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}
+.page a{text-decoration:underline;text-underline-offset:4px}
+.notice{background:#fff5df;border:1px solid #d9c594;border-radius:12px;padding:18px}
+.page button{padding:12px 18px;border:1px solid #1C513E;background:#1C513E;color:white;border-radius:10px;cursor:pointer}
+.page a:focus-visible,.page button:focus-visible{outline:3px solid #296C51;outline-offset:4px}
+@media(max-width:600px){.page{padding:28px 16px 64px}.page section{padding:18px}}

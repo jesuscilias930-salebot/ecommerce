@@ -2,6 +2,7 @@
 import {addressLimits,ShippingAddress} from '@/lib/shipping-address';
 import styles from './shipping-address.module.css';
 import {useState} from 'react';
+import Link from 'next/link';
 import {PostalCodeFields} from './postal-code-fields';
 const fields:{key:keyof ShippingAddress;label:string;auto?:string;type?:string;optional?:boolean}[]=[
  {key:'recipient',label:'Nombre de quien recibe',auto:'shipping name'},
@@ -20,6 +21,7 @@ export function ShippingAddressForm({value,onChange,onContinue,onBack,busy,block
   </label>;
  return <form className={styles.form} onSubmit={e=>{e.preventDefault();if(locationValid&&!busy&&!blocked)onContinue();}}>
   <p className={styles.intro}>Sin crear una cuenta. Los campos con * son obligatorios.</p>
+  <p className={styles.intro}>Jesús Merlyn Cilias Arellano, responsable de Merlyn Mayoreo, utilizará tus datos para cotizar, gestionar y entregar tu pedido. Consulta el <Link href="/privacidad">aviso de privacidad</Link> antes de completarlos. La publicidad es opcional.</p>
   <fieldset className={styles.block}><legend><span>1</span> ¿Quién recibe?</legend><p>Usaremos estos datos para la entrega de tu pedido.</p><div className={styles.fields}>{fields.slice(0,3).map(renderField)}</div></fieldset>
   <fieldset className={styles.block}><legend><span>2</span> ¿A dónde lo enviamos?</legend><p>Escribe tu código postal para encontrar tu ciudad y colonia.</p><div className={styles.fields}><PostalCodeFields value={value} onChange={onChange} busy={busy} onValid={setLocationValid}/>{fields.slice(3).map(renderField)}</div></fieldset>
   <div className={styles.actions}><button className="primary" disabled={busy||blocked||!locationValid} type="submit">{quoteMode?(busy?'Buscando opciones…':'Ver opciones de envío →'):(busy?'Preparando pago…':'Continuar al pago →')}</button><small>Consulta los precios antes de pagar. Cotizar no genera cargos.</small><button className={styles.back} disabled={busy} type="button" onClick={onBack}>← Volver al carrito</button></div>

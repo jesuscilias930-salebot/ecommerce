@@ -2,7 +2,7 @@
 export const COMMUNITY_URL='https://chat.whatsapp.com/FfHJ6u4q06MEEmnlprWgY4?mode=gi_t';
 // Public customer-support number explicitly approved by the merchant.
 export const SUPPORT_URL:string='https://wa.me/522721285563';
-export const storePolicies:{preparation:string;returns:string;hours:string}={preparation:'',returns:'',hours:''};
+export const storePolicies:{preparation:string;returns:string;hours:string}={preparation:'',returns:'Aceptamos cancelaciones antes de entregar el paquete a la paquetería. La política comercial de devolución cubre calcetas con daños o defectos de fábrica; no ofrecemos devoluciones voluntarias por cambio de opinión. Esto no limita los derechos de cancelación, garantía, devolución o reembolso que correspondan por ley, ni la atención de artículos incorrectos o incumplimientos. Contacta a atención con tu folio para coordinar la revisión.',hours:''};
 export type CustomerReference={id:string;quote:string;publicName:string;city?:string;date?:string;photoUrl?:string;photoAlt?:string;bundleId?:number;publicationApproved:boolean;published:boolean};
 export const customerReferences:CustomerReference[]=[];
 export function publishedReferences(bundleId?:number){return customerReferences.filter(r=>r.publicationApproved&&r.published&&r.quote.trim()&&r.publicName.trim()&&(bundleId===undefined||r.bundleId===bundleId));}

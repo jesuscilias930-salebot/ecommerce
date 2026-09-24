@@ -1,10 +1,12 @@
 'use client';
+import {checkoutAttribution} from '@/lib/meta-attribution';
 import {useContext,useEffect,useRef,useState} from 'react';
 import {Context} from './shop';
 import {money} from '@/lib/money';
 import {ShippingAddress,validateAddress} from '@/lib/shipping-address';
 import type {ShippingEstimate} from './cart-shipping';
 import {useRouter} from 'next/navigation';
+import Link from 'next/link';
 
 type Receipt={body:string;folio:string;whatsappUrl:string;subtotal:number};
 const STORAGE_KEY='merlyn-pending-checkout-v1';
@@ -59,7 +61,7 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
     attempt.current={body:orderBody,id};
    }
    try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(attempt.current));}catch{}
-   const response=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...JSON.parse(orderBody),requestId:attempt.current.id,payment}),signal:AbortSignal.timeout(25000)});
+   const response=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...JSON.parse(orderBody),requestId:attempt.current.id,payment,marketing:payment==='stripe'?checkoutAttribution():undefined}),signal:AbortSignal.timeout(25000)});
    const data=await response.json();
    if(!response.ok)throw Error(data.error||'No se pudo registrar el pedido.');
    if(payment==='stripe'){
@@ -76,6 +78,7 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
   finally{lock.current=false;setBusy(false);}
  }
  return <section aria-label="Concluir pedido" className="checkout-actions">
+  <small>Antes de concluir, consulta los <Link href="/terminos">términos de compra</Link>, la <Link href="/envios-y-devoluciones">política de envíos y devoluciones</Link> y el <Link href="/privacidad">aviso de privacidad</Link>. Aceptar publicidad es opcional.</small>
   {cardPaymentsEnabled&&!addressPage&&<><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length} onClick={()=>router.push('/checkout')}>Pagar ahora · Completar dirección →</button><small>En el siguiente paso eliges dónde recibirlo y cuánto cuesta el envío. Sin crear una cuenta.</small></>}
   {cardPaymentsEnabled&&addressPage&&<><p className="checkout-explanation">{shipping?'Dirección y envío listos. Revisa tu total antes de continuar.':'Completa tu dirección y elige un envío para continuar.'}</p><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length||!shipping} onClick={()=>void complete('stripe')}>{busy?'Preparando pago…':'Continuar al pago seguro →'}</button><small>El pago se confirma en Stripe. Todavía no se realizará ningún cargo.</small></>}
   {cardPaymentsEnabled&&<span className="checkout-or">o</span>}
