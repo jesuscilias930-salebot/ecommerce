@@ -115,7 +115,7 @@ export function VolumeCart({
         product: p,
         q,
         group: p ? pricingKey(p) : `product:${-l.id}`,
-        name: q?.name || p?.name || `Producto ${-l.id}`,
+        name: p?.name || q?.name || `Producto ${-l.id}`,
       };
     });
   const groups = [...new Set(selected.map((l) => l.group))].map((key) => {

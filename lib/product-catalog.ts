@@ -1,7 +1,8 @@
 import 'server-only';
+import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
 export type Tier={minQuantity:number;maxQuantity:number|null;pricePerUnit:number|string};
-export type Original = {imageUrls?:string[];imageUrl?:string|null; id:number; name:string; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
+export type Original = {imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
 export const isProductDemo=()=>process.env.STOREFRONT_PRODUCTS_MOCK==='true'||!process.env.SOCK_CONTROL_URL;
 const tiers=(price:number):Tier[]=>[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:99,pricePerUnit:price-2},{minQuantity:100,maxQuantity:null,pricePerUnit:price-4}];
 const mockProducts:Original[]=[
@@ -42,7 +43,7 @@ export async function stockApi(path:string, body?:unknown) {
 }
 export async function getOriginals():Promise<Original[]> {
  await getStoreTenant();
- if(isProductDemo())return mockProducts;
+ if(isProductDemo())return mockProducts.map(p=>({...p,name:productDisplayName(p)}));
  const [products,rules]:[Original[],Record<string,Tier[]>]=await Promise.all([stockApi('/public/store/products/in-stock'),stockApi('/public/store/price-rules')]);
- return products.map(p=>({...p,rules:(rules[String(p.id)]||[]).filter(r=>r.minQuantity>0&&Number.isFinite(Number(r.pricePerUnit))).sort((a,b)=>a.minQuantity-b.minQuantity)}));
+ return products.map(p=>({...p,name:productDisplayName(p),rules:(rules[String(p.id)]||[]).filter(r=>r.minQuantity>0&&Number.isFinite(Number(r.pricePerUnit))).sort((a,b)=>a.minQuantity-b.minQuantity)}));
 }
