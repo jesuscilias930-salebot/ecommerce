@@ -6,12 +6,12 @@ export type Original = {imageUrls?:string[];imageUrl?:string|null; id:number; na
 export const isProductDemo=()=>process.env.STOREFRONT_PRODUCTS_MOCK==='true'||!process.env.SOCK_CONTROL_URL;
 const tiers=(price:number):Tier[]=>[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:99,pricePerUnit:price-2},{minQuantity:100,maxQuantity:null,pricePerUnit:price-4}];
 const mockProducts:Original[]=[
- {id:900000001,name:'Calcetín de caricatura para dama',gender:'Mujer',size:'22–25',pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
- {id:900000002,name:'Calcetín de caricatura para caballero',gender:'Hombre',size:'25–28',pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
- {id:900000003,name:'Calcetín deportivo blanco',gender:'Unisex',size:'Unitalla',pricingGroup:'deportivo',currentStock:300,rules:tiers(18)},
- {id:900000004,name:'Calcetín deportivo negro',gender:'Unisex',size:'Unitalla',pricingGroup:'deportivo',currentStock:250,rules:tiers(18)},
- {id:900000005,name:'Calcetín térmico',gender:'Unisex',size:'Unitalla',pricingGroup:'termico',currentStock:150,rules:tiers(28)},
- {id:900000006,name:'Calcetín infantil surtido',gender:'Infantil',size:'18–21',pricingGroup:'infantil',currentStock:0,rules:tiers(16)},
+ {id:900000001,name:'Calcetín de caricatura para dama',gender:'Mujer',size:'22–25',category:'Caricatura',pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
+ {id:900000002,name:'Calcetín de caricatura para caballero',gender:'Hombre',size:'25–28',category:'Caricatura',pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
+ {id:900000003,name:'Calcetín deportivo blanco',gender:'Unisex',size:'Unitalla',category:'Deportivo',pricingGroup:'deportivo',currentStock:300,rules:tiers(18)},
+ {id:900000004,name:'Calcetín deportivo negro',gender:'Unisex',size:'Unitalla',category:'Deportivo',pricingGroup:'deportivo',currentStock:250,rules:tiers(18)},
+ {id:900000005,name:'Calcetín térmico',gender:'Unisex',size:'Unitalla',category:'Térmico',pricingGroup:'termico',currentStock:150,rules:tiers(28)},
+ {id:900000006,name:'Calcetín infantil surtido',gender:'Infantil',size:'18–21',category:'Infantil',pricingGroup:'infantil',currentStock:0,rules:tiers(16)},
 ];
 function mockQuote(body:unknown) {
  const quantities=new Map<number,number>();

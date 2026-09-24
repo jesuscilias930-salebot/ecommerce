@@ -18,6 +18,8 @@ import { Context } from "./shop";
 import type { Original } from "@/lib/product-catalog";
 import { money } from "@/lib/money";
 import { StorePhoto } from "./store-photo";
+import { groupByCategory } from "@/lib/product-categories";
+import categoryStyles from "./product-categories.module.css";
 
 function SockVisual({ product }: { product: Original }) {
   const id = useId().replaceAll(":", "");
@@ -98,10 +100,12 @@ export function Originals({
   const [query, setQuery] = useState("");
   const { lines } = useContext(Context);
   const filtered = products.filter((p) =>
-    `${p.name} ${p.pricingGroup || ""}`
+    `${p.name} ${p.category || ""} ${p.pricingGroup || ""}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
+  const categories = groupByCategory(filtered);
+  const categoryId = (key:string) => `products-${Array.from(key,c=>c.codePointAt(0)!.toString(16)).join('-')}`;
   return (
     <>
       <div className="original-toolbar">
@@ -144,11 +148,13 @@ export function Originals({
         </span>
         <small>Combina variantes. Ahorra por volumen.</small>
       </div>
-      <div className="original-grid">
-        {filtered.map((p) => (
-          <OriginalCard key={p.id} product={p} products={products} />
-        ))}
-      </div>
+      {categories.length>1&&<nav className={categoryStyles.navigation} aria-label="Ir a una categoría">
+        {categories.map(category=><a key={category.key} href={`#${categoryId(category.key)}`}>{category.label}<span>{category.products.length}</span></a>)}
+      </nav>}
+      {categories.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
+        <header className={categoryStyles.header}><h2 id={`${categoryId(category.key)}-title`}>{category.label}</h2><span>{category.products.length} {category.products.length===1?'producto':'productos'}</span></header>
+        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products}/>)}</div>
+      </section>)}
       {!filtered.length && (
         <div className="empty">
           <p>No encontramos productos con esa búsqueda.</p>
