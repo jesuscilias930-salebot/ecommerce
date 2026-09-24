@@ -1,9 +1,10 @@
 import { validateAddress } from '@/lib/shipping-address';
 import { getStoreTenant } from '@/lib/store-tenant';
+import { isAllowedStoreOrigin } from '@/lib/store-origin.mjs';
 
 export async function POST(request: Request) {
-  if (request.headers.get('origin') !== new URL(request.url).origin)
-    return Response.json({error:'Origen no permitido'},{status:403});
+  if (!isAllowedStoreOrigin(request, process.env.STOREFRONT_DOMAIN_TENANTS, process.env.NODE_ENV === 'development'))
+    return Response.json({error:'Origen no permitido'},{status:403,headers:{'Cache-Control':'no-store'}});
   const headers={'Cache-Control':'no-store'};
   try {
     const raw=await request.text();

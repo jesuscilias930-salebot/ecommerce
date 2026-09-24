@@ -2,11 +2,12 @@ import {stockApi,isProductDemo} from '@/lib/product-catalog';
 import {getCatalog} from '@/lib/catalog';
 import {validateAddress} from '@/lib/shipping-address';
 import {getStoreFeatures} from '@/lib/store-features';
+import {isAllowedStoreOrigin} from '@/lib/store-origin.mjs';
 
 const SALES_NUMBER='522721285563';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(request:Request) {
- if(request.headers.get('origin')!==new URL(request.url).origin)return Response.json({error:'Origen no permitido'},{status:403});
+ if(!isAllowedStoreOrigin(request,process.env.STOREFRONT_DOMAIN_TENANTS,process.env.NODE_ENV==='development'))return Response.json({error:'Origen no permitido'},{status:403,headers:{'Cache-Control':'no-store'}});
  try {
   const raw=await request.text();
   if(raw.length>20000)return Response.json({error:'Pedido demasiado grande'},{status:413});

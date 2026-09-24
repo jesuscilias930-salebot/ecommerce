@@ -42,4 +42,13 @@ Deployment checks:
 3. Verify an unregistered Host cannot retrieve any catalog or call SockControl.
 4. Never add real credentials to the map or expose it as NEXT_PUBLIC_*.
 
-Regression tests: `node --test tests/store-domain.test.mjs`.
+POST /api/shipping-quote and /api/orders validate Origin against the allowlisted
+Host, not request.url (which may be internal HTTP behind Render). Origin must
+be HTTPS in production and exactly match the public Host, including port.
+Missing/opaque origins and explicit cross-site fetch metadata are rejected.
+Forwarded headers never authorize a request. HTTP loopback is allowed only in
+development. This retains the browser cross-origin protection; it is not API
+authentication. If a proxy rewrites Host, fix ingress preservation rather than
+trusting a caller-provided X-Forwarded-Host.
+
+Regression tests: `node --test tests/store-domain.test.mjs tests/store-origin.test.mjs`.
