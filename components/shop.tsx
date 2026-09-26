@@ -19,6 +19,9 @@ import { money } from "@/lib/money";
 import { BoxArt } from "./box-art";
 import { StorePhoto } from "./store-photo";
 import { BundleDescription } from "./bundle-description";
+import { BundleComparison } from './bundle-comparison';
+import { matchesSearch } from '@/lib/shopping-discovery';
+import discovery from './shopping-discovery.module.css';
 import "./purchase-actions.css";
 type Line = { id: number; quantity: number };
 export const Context = createContext<{
@@ -92,6 +95,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 export function Header() {
   const { lines } = useContext(Context);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchType, setSearchType] = useState('/paquetes');
   return (
     <>
       <div className="announcement">
@@ -116,22 +120,38 @@ export function Header() {
           <b>{lines.reduce((n, l) => n + l.quantity, 0)}</b>
         </Link>
       </header>
+      <div className={discovery.searchBar}>
+        <form action={searchType} method="get" role="search">
+          <select aria-label="Dónde buscar" value={searchType} onChange={event=>setSearchType(event.target.value)}><option value="/paquetes">Paquetes</option><option value="/productos">Productos</option></select>
+          <input name="q" type="search" aria-label="Buscar en la tienda" placeholder="Caricatura, deportivo, dama…" maxLength={120}/>
+          <button type="submit" aria-label="Buscar"><Search size={20}/></button>
+        </form>
+        <Link href="/referencias">Referencias de clientes</Link><Link href="/ayuda">¿Necesitas ayuda?</Link>
+      </div>
     </>
   );
 }
-export function AddButton({ item }: { item: Package }) {
+export function AddButton({ item, chooseQuantity = false }: { item: Package; chooseQuantity?: boolean }) {
   const router = useRouter();
   const { lines, change } = useContext(Context);
   const [added, setAdded] = useState(false);
+  const [amount, setAmount] = useState(1);
   const quantity = lines.find((l) => l.id === item.id)?.quantity || 0;
+  const limit = Math.max(0, Math.min(item.available, 99) - quantity);
+  const valid = Number.isInteger(amount) && amount >= 1 && amount <= limit;
+  const review = chooseQuantity && added && quantity > 0;
   return (
     <div className="bundle-purchase-actions">
+      {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar
+        <input type="number" min={1} max={limit || 1} value={amount} onChange={event=>{setAmount(Number(event.target.value));setAdded(false);}}/>
+        <small>{valid ? `${amount * item.pieces} pares · ${money(amount * item.price)} MXN con IVA, más envío` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
+      </label>}
       <button
         type="button"
         className="primary"
-        disabled={quantity >= item.available || quantity >= 99}
+        disabled={!valid}
         onClick={() => {
-          change(item.id, quantity + 1);
+          change(item.id, quantity + amount);
           setAdded(true);
         }}
       >
@@ -140,19 +160,21 @@ export function AddButton({ item }: { item: Package }) {
           : quantity >= item.available
             ? "Máximo disponible"
             : added
-              ? "Agregar otra caja"
+              ? (amount === 1 ? "Agregar otra caja" : `Agregar otras ${amount} cajas`)
               : "Agregar a mi carrito"}{" "}
         <Plus size={18} />
       </button>
-      <button type="button" className="primary buy-now" disabled={!item.available || quantity > item.available} onClick={() => {
-        if (!quantity) change(item.id, 1);
+      <button type="button" className="primary buy-now" disabled={chooseQuantity ? !review && !valid : !item.available || quantity > item.available} onClick={() => {
+        if (chooseQuantity && !review) change(item.id, quantity + amount);
+        else if (!quantity) change(item.id, 1);
         router.push("/carrito");
-      }}>Comprar ahora <ArrowRight size={18} /></button>
+      }}>{review ? 'Revisar mi pedido' : 'Comprar ahora'} <ArrowRight size={18} /></button>
       {added && (
         <p role="status" className="success">
           Paquete agregado. <Link href="/carrito">Ver mi carrito →</Link>
         </p>
       )}
+      {chooseQuantity && quantity > 0 && <p><Link href="/carrito">Ya tienes {quantity} cajas en el carrito. Revisar pedido →</Link></p>}
     </div>
   );
 }
@@ -180,31 +202,39 @@ export function Card({ item }: { item: Package }) {
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
         <small>
-          Desde {money(item.price / item.pieces)} por pieza · Envío aparte
+          Promedio {item.pieces > 0 ? money(item.price / item.pieces) : '—'} por par · IVA incluido · Envío aparte
         </small>
         <AddButton item={item} />
       </div>
     </article>
   );
 }
-export function Catalog({ items, budget = "all", error }: { items: Package[]; budget?: string; error?: string }) {
+export function Catalog({ items, budget = "all", error, initialQuery = '' }: { items: Package[]; budget?: string; error?: string; initialQuery?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   function setBudget(value: string) {
-    startTransition(() => router.replace(value === "all" ? "/paquetes" : `/paquetes?budget=${encodeURIComponent(value)}`, { scroll: false }));
+    const params = new URLSearchParams();
+    if (value !== 'all') params.set('budget', value);
+    if (query.trim()) params.set('q', query.trim());
+    startTransition(() => router.replace(`/paquetes?${params}`, { scroll: false }));
   }
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  useEffect(()=>setQuery(initialQuery),[initialQuery]);
   const [sort, setSort] = useState("default");
+  const [compareIds, setCompareIds] = useState<number[]>([]);
+  const compared = items.filter(item=>compareIds.includes(item.id));
   const filtered = items
     .filter(
       (p) =>
-        p.name.toLowerCase().includes(query.toLowerCase()),
+        matchesSearch([p.name, p.description || '', ...p.items.map(item=>item.name)].join(' '), query),
     )
     .sort((a, b) =>
       sort === "asc"
         ? a.price - b.price
-        : sort === "desc"
+          : sort === "desc"
           ? b.price - a.price
+          : sort === 'unit' ? (a.pieces > 0 ? a.price/a.pieces : Infinity) - (b.pieces > 0 ? b.price/b.pieces : Infinity)
+          : sort === 'pieces' ? b.pieces - a.pieces
           : 0,
     );
   return (
@@ -243,9 +273,11 @@ export function Catalog({ items, budget = "all", error }: { items: Package[]; bu
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
-            <option value="default">Orden recomendado</option>
+            <option value="default">Orden del catálogo</option>
             <option value="asc">Menor precio</option>
             <option value="desc">Mayor precio</option>
+            <option value="unit">Menor costo promedio por par</option>
+            <option value="pieces">Más pares por caja</option>
           </select>
         </div>
       </div>
@@ -253,19 +285,21 @@ export function Catalog({ items, budget = "all", error }: { items: Package[]; bu
         {pending ? "Consultando paquetes…" : error ? "No se pudo cargar el catálogo" : `${filtered.length} paquetes para empezar`}
       </p>
       {error && <div role="alert"><p>{error}</p><button className="primary" disabled={pending} onClick={() => startTransition(() => router.refresh())}>Reintentar</button></div>}
+      {!!items.length && <div className={discovery.compareStatus}><span>¿No sabes cuál elegir? Marca hasta 3 paquetes para comparar.</span>{compared.length>0&&<a href="#comparar-paquetes">Comparar ({compared.length}/3)</a>}</div>}
       <div className="product-grid" aria-busy={pending} inert={pending} style={{ opacity: pending ? .55 : 1 }}>
         {filtered.map((p) => (
-          <Card key={p.id} item={p} />
+          <div key={p.id}><label className={discovery.compareCheck}><input type="checkbox" checked={compared.some(item=>item.id===p.id)} disabled={compared.length>=3&&!compared.some(item=>item.id===p.id)} onChange={event=>setCompareIds(event.target.checked?[...compared.map(item=>item.id),p.id]:compared.filter(item=>item.id!==p.id).map(item=>item.id))}/>Comparar {p.name}</label><Card item={p}/></div>
         ))}
       </div>
+      <BundleComparison items={compared} onRemove={id=>setCompareIds(ids=>ids.filter(value=>value!==id))} onClear={()=>setCompareIds([])}/>
       {!filtered.length && !error && !pending && (
         <div className="empty">
           <PackageCheck />
           <h3>No encontramos paquetes con estos filtros.</h3>
           <button
             onClick={() => {
-              setBudget("all");
               setQuery("");
+              startTransition(()=>router.replace('/paquetes', {scroll:false}));
             }}
           >
             Limpiar filtros

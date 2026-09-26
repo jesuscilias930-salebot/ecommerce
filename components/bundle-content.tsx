@@ -1,10 +1,10 @@
 import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
 
-export function BundleContent({ item }: { item: Package }) {
+export function BundleContent({ item, showHeading = true }: { item: Package; showHeading?: boolean }) {
   return (
     <section className="bundle-breakdown">
-      <h3>Todo lo que incluye tu caja</h3>
+      {showHeading && <h3>Todo lo que incluye tu caja</h3>}
       <p>
         {item.items.length} productos · {item.pieces} piezas en total
       </p>

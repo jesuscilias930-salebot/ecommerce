@@ -3,7 +3,8 @@ import { LiveSummary } from "./live-summary";
 import { calculateGroups, pricingKey } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
-import { useContext, useState, useId } from "react";
+import { useContext, useState, useId, useEffect } from "react";
+import { matchesSearch } from '@/lib/shopping-discovery';
 import {
   Search,
   ShoppingBag,
@@ -93,16 +94,17 @@ function SockVisual({ product }: { product: Original }) {
 export function Originals({
   products,
   packages = [],
+  initialQuery = '',
 }: {
   products: Original[];
   packages?: Package[];
+  initialQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  useEffect(()=>setQuery(initialQuery),[initialQuery]);
   const { lines } = useContext(Context);
   const filtered = products.filter((p) =>
-    `${p.name} ${p.category || ""} ${p.pricingGroup || ""}`
-      .toLowerCase()
-      .includes(query.toLowerCase()),
+    matchesSearch(`${p.name} ${p.category || ""} ${p.pricingGroup || ""} ${p.gender || ''}`,query),
   );
   const categories = groupByCategory(filtered);
   const categoryId = (key:string) => `products-${Array.from(key,c=>c.codePointAt(0)!.toString(16)).join('-')}`;

@@ -1,0 +1,55 @@
+.searchBar{display:flex;align-items:center;gap:10px;padding:12px 6%;background:#183C32;color:white;flex-wrap:wrap;}
+.searchBar form{display:flex;flex:1;max-width:850px;min-width:0;background:#fff;border-radius:8px;overflow:hidden;}
+.searchBar select,.searchBar input{min-width:0;padding:12px;border:0;color:#183C32;background:#fff;}
+.searchBar select{max-width:150px;border-right:1px solid #DEDFD6;}
+.searchBar input{flex:1;width:100%;}
+.searchBar button{display:flex;align-items:center;justify-content:center;padding:12px;background:#DCE8A0;color:#183C32;min-width:48px;}
+.searchBar>a{font-size:13px;padding:8px;}
+.comparison{margin:28px 0;padding:24px;border:1px solid #DEDFD6;border-radius:16px;background:#fff;scroll-margin-top:20px;}
+.comparison header{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.comparison p{color:#6C7770;font-size:14px;}
+.comparison button,.compareCheck{border:1px solid #DEDFD6;background:#FAF9F6;color:#183C32;border-radius:8px;padding:10px;font-size:13px;}
+.comparison h2{font-size:26px!important;}
+.tableScroll{overflow-x:auto;}
+.comparison table{border-collapse:collapse;width:100%;text-align:left;}
+.comparison th,.comparison td{vertical-align:top;min-width:170px;max-width:280px;border-bottom:1px solid #DEDFD6;padding:16px;font-size:14px;line-height:1.5;}
+.comparison thead th{background:#E9EDDD;}
+.comparison thead button{display:block;margin-top:10px;}
+.comparison caption{text-align:left;padding:12px 0;color:#6C7770;font-size:13px;}
+.comparison ul{padding-left:16px;margin:0;}
+.comparison li+li{margin-top:6px;}
+.compareCheck{display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;min-height:44px;}
+.compareCheck input{width:18px;height:18px;accent-color:#1C513E;}
+.compareStatus{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0;color:#183C32;}
+.compareStatus a{padding:10px 14px;background:#DCE8A0;border-radius:8px;font-weight:600;}
+.detailLayout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:40px;align-items:start;margin-top:26px;}
+.detailMain{min-width:0;}
+.detailMain>div:first-child{max-height:650px;}
+.purchaseBox{position:sticky;top:20px;border:1px solid #DEDFD6;border-radius:18px;background:white;padding:28px;}
+.purchaseBox h1{font-size:clamp(28px,3vw,42px);line-height:1.12;margin:12px 0;overflow-wrap:anywhere;}
+.purchaseBox p{margin:10px 0;}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
+.facts div{background:#E9EDDD;border-radius:10px;padding:14px;}
+.facts dt{font-size:12px;color:#6C7770;}
+.facts dd{margin:5px 0 0;font-size:22px;font-weight:600;}
+.jumpLinks{display:flex;flex-wrap:wrap;gap:14px;margin:20px 0;font-size:14px;}
+.jumpLinks a{text-decoration:underline;text-underline-offset:4px;}
+.content{padding:28px 0;scroll-margin-top:24px;}
+.content h2{font-size:28px!important;}
+.content details{border-bottom:1px solid #DEDFD6;padding:16px 0;}
+.content summary{font-weight:600;line-height:1.5;}
+.content details p{margin-top:12px;}
+.content a{text-decoration:underline;}
+.breadcrumbs{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:#6C7770;}
+.breadcrumbs span{overflow-wrap:anywhere;}
+.mobilePurchase{display:none;}
+.quantity{display:grid;flex:1 0 100%;gap:8px;margin:12px 0;color:#183C32;}
+.quantity input{width:100%;padding:12px;border:1px solid #DEDFD6;border-radius:8px;background:white;}
+.quantity small{font-size:12px;color:#6C7770;}
+@media(max-width:800px){
+ .detailLayout{grid-template-columns:minmax(0,1fr);gap:20px;}.detailMain{display:contents;}.purchaseBox{position:static;grid-row:2;padding:20px;}
+ .searchBar{padding:10px 5%;}.searchBar form{flex-basis:100%;}.searchBar select{max-width:112px;font-size:12px;}
+ .comparison{padding:16px;}.detailPage{padding-bottom:110px!important;}
+ .mobilePurchase{display:flex;position:fixed;z-index:30;bottom:0;left:0;right:0;align-items:center;justify-content:space-between;gap:12px;padding:12px 5% max(12px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid #DEDFD6;box-shadow:0 -4px 20px #183c3212;}
+ .mobilePurchase small{display:block;color:#6C7770;font-size:11px;}.mobilePurchase a{padding:14px;background:#1C513E;color:white;border-radius:8px;font-size:13px;}
+}
