@@ -21,7 +21,6 @@ import { money } from "@/lib/money";
 import { BoxArt } from "./box-art";
 import { StorePhoto } from "./store-photo";
 import { BundleDescription } from "./bundle-description";
-import { BundleComparison } from './bundle-comparison';
 import { matchesSearch } from '@/lib/shopping-discovery';
 import discovery from './shopping-discovery.module.css';
 import "./purchase-actions.css";
@@ -230,8 +229,6 @@ export function Catalog({ items, budget = "all", error, initialQuery = '' }: { i
   const [query, setQuery] = useState(initialQuery);
   useEffect(()=>setQuery(initialQuery),[initialQuery]);
   const [sort, setSort] = useState("default");
-  const [compareIds, setCompareIds] = useState<number[]>([]);
-  const compared = items.filter(item=>compareIds.includes(item.id));
   const filtered = items
     .filter(
       (p) =>
@@ -294,13 +291,11 @@ export function Catalog({ items, budget = "all", error, initialQuery = '' }: { i
         {pending ? "Consultando paquetes…" : error ? "No se pudo cargar el catálogo" : `${filtered.length} paquetes para empezar`}
       </p>
       {error && <div role="alert"><p>{error}</p><button className="primary" disabled={pending} onClick={() => startTransition(() => router.refresh())}>Reintentar</button></div>}
-      {!!items.length && <div className={discovery.compareStatus}><span>¿No sabes cuál elegir? Marca hasta 3 paquetes para comparar.</span>{compared.length>0&&<a href="#comparar-paquetes">Comparar ({compared.length}/3)</a>}</div>}
       <div className="product-grid" aria-busy={pending} inert={pending} style={{ opacity: pending ? .55 : 1 }}>
         {filtered.map((p) => (
-          <div key={p.id}><label className={discovery.compareCheck}><input type="checkbox" checked={compared.some(item=>item.id===p.id)} disabled={compared.length>=3&&!compared.some(item=>item.id===p.id)} onChange={event=>setCompareIds(event.target.checked?[...compared.map(item=>item.id),p.id]:compared.filter(item=>item.id!==p.id).map(item=>item.id))}/>Comparar {p.name}</label><Card item={p}/></div>
+          <Card key={p.id} item={p}/>
         ))}
       </div>
-      <BundleComparison items={compared} onRemove={id=>setCompareIds(ids=>ids.filter(value=>value!==id))} onClear={()=>setCompareIds([])}/>
       {!filtered.length && !error && !pending && (
         <div className="empty">
           <PackageCheck />
