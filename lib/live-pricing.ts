@@ -1,5 +1,9 @@
 import type {Original} from './product-catalog';
-export const pricingKey=(p:Original)=>p.pricingGroup?.trim()?`group:${p.pricingGroup.trim().toLowerCase()}`:`product:${p.id}`;
+export const hasCategoryVolume=(p:Original)=>Number.isInteger(p.categoryId)&&p.categoryId!=null;
+// An absent field indicates an older backend during a rolling deployment.
+// Explicit null means no category: never combine unrelated uncategorized products.
+export const pricingKey=(p:Original)=>hasCategoryVolume(p)?`category:${p.categoryId}`:p.categoryId===undefined&&p.pricingGroup?.trim()?`group:${p.pricingGroup.trim().toLowerCase()}`:`product:${p.id}`;
+export const pricingName=(p:Original)=>hasCategoryVolume(p)?p.category||'Categoría':p.categoryId===undefined&&p.pricingGroup?.trim()||p.name;
 export function calculateGroups(products:Original[],lines:{id:number;quantity:number}[]) {
  const selected=lines.filter(l=>l.id<0).map(l=>({quantity:l.quantity,product:products.find(p=>p.id===-l.id),id:l.id}));
  const keys=[...new Set(selected.map(l=>l.product?pricingKey(l.product):`missing:${l.id}`))];
@@ -14,6 +18,6 @@ export function calculateGroups(products:Original[],lines:{id:number;quantity:nu
   });
   const total=rows.every(l=>l.total!==null)?rows.reduce((s,l)=>s+Math.round(l.total!*100),0)/100:null;
   const next=rows.flatMap(l=>l.product?.rules.filter(r=>r.minQuantity>quantity&&l.price!==null&&Number(r.pricePerUnit)<l.price).map(r=>r.minQuantity)||[]).sort((a,b)=>a-b)[0];
-  return {key,name:members[0].product?.pricingGroup||members[0].product?.name||'Producto no disponible',quantity,rows,total,next};
+  return {key,name:members[0].product?pricingName(members[0].product):'Producto no disponible',quantity,rows,total,next};
  });
 }

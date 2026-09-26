@@ -1,17 +1,18 @@
 import 'server-only';
 import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
+import { pricingKey } from './live-pricing';
 export type Tier={minQuantity:number;maxQuantity:number|null;pricePerUnit:number|string};
-export type Original = {imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
+export type Original = {imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
 export const isProductDemo=()=>process.env.STOREFRONT_PRODUCTS_MOCK==='true'||!process.env.SOCK_CONTROL_URL;
 const tiers=(price:number):Tier[]=>[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:99,pricePerUnit:price-2},{minQuantity:100,maxQuantity:null,pricePerUnit:price-4}];
 const mockProducts:Original[]=[
- {id:900000001,name:'Calcetín de caricatura para dama',gender:'Mujer',size:'22–25',category:'Caricatura',pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
- {id:900000002,name:'Calcetín de caricatura para caballero',gender:'Hombre',size:'25–28',category:'Caricatura',pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
- {id:900000003,name:'Calcetín deportivo blanco',gender:'Unisex',size:'Unitalla',category:'Deportivo',pricingGroup:'deportivo',currentStock:300,rules:tiers(18)},
- {id:900000004,name:'Calcetín deportivo negro',gender:'Unisex',size:'Unitalla',category:'Deportivo',pricingGroup:'deportivo',currentStock:250,rules:tiers(18)},
- {id:900000005,name:'Calcetín térmico',gender:'Unisex',size:'Unitalla',category:'Térmico',pricingGroup:'termico',currentStock:150,rules:tiers(28)},
- {id:900000006,name:'Calcetín infantil surtido',gender:'Infantil',size:'18–21',category:'Infantil',pricingGroup:'infantil',currentStock:0,rules:tiers(16)},
+ {id:900000001,name:'Calcetín de caricatura para dama',gender:'Mujer',size:'22–25',category:'Caricatura',categoryId:1,pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
+ {id:900000002,name:'Calcetín de caricatura para caballero',gender:'Hombre',size:'25–28',category:'Caricatura',categoryId:1,pricingGroup:'caricatura',currentStock:500,rules:tiers(20)},
+ {id:900000003,name:'Calcetín deportivo blanco',gender:'Unisex',size:'Unitalla',category:'Deportivo',categoryId:2,pricingGroup:'deportivo',currentStock:300,rules:tiers(18)},
+ {id:900000004,name:'Calcetín deportivo negro',gender:'Unisex',size:'Unitalla',category:'Deportivo',categoryId:2,pricingGroup:'deportivo',currentStock:250,rules:tiers(18)},
+ {id:900000005,name:'Calcetín térmico',gender:'Unisex',size:'Unitalla',category:'Térmico',categoryId:3,pricingGroup:'termico',currentStock:150,rules:tiers(28)},
+ {id:900000006,name:'Calcetín infantil surtido',gender:'Infantil',size:'18–21',category:'Infantil',categoryId:4,pricingGroup:'infantil',currentStock:0,rules:tiers(16)},
 ];
 function mockQuote(body:unknown) {
  const quantities=new Map<number,number>();
@@ -22,7 +23,7 @@ function mockQuote(body:unknown) {
   return {product,quantity};
  });
  const lines=selected.map(({product:p,quantity})=>{
-  const groupQuantity=selected.filter(l=>l.product.pricingGroup===p.pricingGroup).reduce((sum,l)=>sum+l.quantity,0);
+  const groupQuantity=selected.filter(l=>pricingKey(l.product)===pricingKey(p)).reduce((sum,l)=>sum+l.quantity,0);
   const rule=p.rules.find(r=>groupQuantity>=r.minQuantity&&(r.maxQuantity===null||groupQuantity<=r.maxQuantity));
   if(!rule)throw new Error('Sin tarifa');
   const unitPrice=Number(rule.pricePerUnit);

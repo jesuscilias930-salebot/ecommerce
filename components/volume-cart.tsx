@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { Context } from "./shop";
 import type { Package } from "@/lib/catalog";
 import type { Original } from "@/lib/product-catalog";
-import { pricingKey } from "@/lib/live-pricing";
+import { pricingKey, pricingName } from "@/lib/live-pricing";
 import { money } from "@/lib/money";
 import "./order-cart.css";
 type Quote = {
@@ -122,7 +122,7 @@ export function VolumeCart({
     const members = selected.filter((l) => l.group === key);
     return {
       key,
-      name: members[0].product?.pricingGroup || members[0].name,
+      name: members[0].product ? pricingName(members[0].product) : members[0].name,
       members,
       quantity: members.reduce((s, l) => s + l.quantity, 0),
       total: members.every((l) => l.q)

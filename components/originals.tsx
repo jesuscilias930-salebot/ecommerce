@@ -1,6 +1,6 @@
 "use client";
 import { LiveSummary } from "./live-summary";
-import { calculateGroups, pricingKey } from "@/lib/live-pricing";
+import { calculateGroups, pricingKey, pricingName, hasCategoryVolume } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
 import { useContext, useState, useId, useEffect } from "react";
@@ -107,6 +107,7 @@ export function Originals({
     matchesSearch(`${p.name} ${p.category || ""} ${p.pricingGroup || ""} ${p.gender || ''}`,query),
   );
   const categories = groupByCategory(filtered);
+  const groups = calculateGroups(products, lines);
   const categoryId = (key:string) => `products-${Array.from(key,c=>c.codePointAt(0)!.toString(16)).join('-')}`;
   return (
     <>
@@ -155,6 +156,19 @@ export function Originals({
       </nav>}
       {categories.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
         <header className={categoryStyles.header}><h2 id={`${categoryId(category.key)}-title`}>{category.label}</h2><span>{category.products.length} {category.products.length===1?'producto':'productos'}</span></header>
+        {hasCategoryVolume(category.products[0]) && <aside className={categoryStyles.volumeNotice} aria-label={`Cómo funciona el mayoreo de ${category.label}`}>
+          <div>
+            <strong>Combina géneros de {category.label} y alcanza el precio por volumen</strong>
+            <p>Sumamos los pares de todos los productos individuales de esta categoría en tu carrito. Cada modelo aplica su propia tarifa para esa cantidad total.</p>
+            <p className={categoryStyles.example}>Por ejemplo: <b>25 pares de dama + 25 de caballero = rango de 50 pares.</b></p>
+            <small>Otras categorías y los pares incluidos en paquetes no se suman a este grupo.</small>
+          </div>
+          <div className={categoryStyles.volumeCount} role="status" aria-live="polite" aria-atomic="true">
+            <span>En tu carrito · {category.label}</span>
+            <b>{groups.find(g=>g.key===pricingKey(category.products[0]))?.quantity || 0} pares</b>
+            <span>El precio se actualiza al agregar o quitar pares.</span>
+          </div>
+        </aside>}
         <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products}/>)}</div>
       </section>)}
       {!filtered.length && (
@@ -223,7 +237,7 @@ function OriginalCard({
             {[p.gender, p.size].filter(Boolean).join(" · ")}
           </p>
           <span className="product-group-badge">
-            Grupo {p.pricingGroup || p.name}
+            Grupo {pricingName(p)}
           </span>
           <h2>{p.name}</h2>
         </div>
@@ -288,9 +302,9 @@ function OriginalCard({
           </table>
         </div>
         <p className="original-volume">
-          {p.pricingGroup ? (
+          {hasCategoryVolume(p) || (p.categoryId===undefined && p.pricingGroup) ? (
             <>
-              Combina variantes de <b>{p.pricingGroup}</b> para alcanzar el
+              Combina variantes de <b>{pricingName(p)}</b> para alcanzar el
               siguiente precio.
             </>
           ) : (
@@ -333,7 +347,7 @@ function OriginalCard({
                 <>
                   <p>
                     ¡Agrega {nextTier.minQuantity - (proposed?.quantity || 0)}{" "}
-                    pares más del grupo <b>{p.pricingGroup || p.name}</b> y
+                    pares más del grupo <b>{pricingName(p)}</b> y
                     ahorra{" "}
                     <b>
                       {money(proposedRow.price - Number(nextTier.pricePerUnit))}{" "}
