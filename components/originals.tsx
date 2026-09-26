@@ -107,7 +107,7 @@ export function Originals({
     matchesSearch(`${p.name} ${p.category || ""} ${p.pricingGroup || ""} ${p.gender || ''}`,query),
   );
   const categories = groupByCategory(filtered);
-  const groups = calculateGroups(products, lines);
+  const groups = calculateGroups(products, lines, packages);
   const categoryId = (key:string) => `products-${Array.from(key,c=>c.codePointAt(0)!.toString(16)).join('-')}`;
   return (
     <>
@@ -159,9 +159,9 @@ export function Originals({
         {hasCategoryVolume(category.products[0]) && <aside className={categoryStyles.volumeNotice} aria-label={`Cómo funciona el mayoreo de ${category.label}`}>
           <div>
             <strong>Combina géneros de {category.label} y alcanza el precio por volumen</strong>
-            <p>Sumamos los pares de todos los productos individuales de esta categoría en tu carrito. Cada modelo aplica su propia tarifa para esa cantidad total.</p>
+            <p>Sumamos los pares de las cajas y los productos individuales de esta categoría en tu carrito. Cada modelo aplica su propia tarifa para esa cantidad total.</p>
             <p className={categoryStyles.example}>Por ejemplo: <b>25 pares de dama + 25 de caballero = rango de 50 pares.</b></p>
-            <small>Otras categorías y los pares incluidos en paquetes no se suman a este grupo.</small>
+            <small>Los pares dentro de tus paquetes también cuentan. Otras categorías se calculan por separado.</small>
           </div>
           <div className={categoryStyles.volumeCount} role="status" aria-live="polite" aria-atomic="true">
             <span>En tu carrito · {category.label}</span>
@@ -169,7 +169,7 @@ export function Originals({
             <span>El precio se actualiza al agregar o quitar pares.</span>
           </div>
         </aside>}
-        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products}/>)}</div>
+        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages}/>)}</div>
       </section>)}
       {!filtered.length && (
         <div className="empty">
@@ -183,9 +183,11 @@ export function Originals({
 function OriginalCard({
   product: p,
   products,
+  packages = [],
 }: {
   product: Original;
   products: Original[];
+  packages?: Package[];
 }) {
   const { lines, change } = useContext(Context);
   const quantity = lines.find((l) => l.id === -p.id)?.quantity || 0;
@@ -193,21 +195,21 @@ function OriginalCard({
   const inputId = useId();
   const max = Math.max(
     0,
-    Math.min(p.currentStock - quantity, 100000 - quantity),
+    Math.min(p.currentStock - quantity - lines.filter(l=>l.id>0).reduce((n,l)=>n+(packages.find(b=>b.id===l.id)?.items.filter(i=>i.productId===p.id).reduce((s,i)=>s+i.quantity,0)||0)*l.quantity,0), 100000 - quantity),
   );
   const valid =
     !!p.rules.length &&
     Number.isInteger(amount) &&
     amount >= 1 &&
     amount <= max;
-  const group = calculateGroups(products, lines).find(
+  const group = calculateGroups(products, lines, packages).find(
     (g) => g.key === pricingKey(p),
   );
   const current = group?.rows.find((l) => l.id === -p.id);
   const proposed = calculateGroups(products, [
     ...lines.filter((l) => l.id !== -p.id),
     { id: -p.id, quantity: quantity + (valid ? amount : 0) },
-  ]).find((g) => g.key === pricingKey(p));
+  ], packages).find((g) => g.key === pricingKey(p));
   const proposedRow = proposed?.rows.find((l) => l.id === -p.id);
   const nextTier = p.rules
     .filter(

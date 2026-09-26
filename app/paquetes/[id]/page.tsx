@@ -36,14 +36,14 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
       </div>
       <section className={styles.purchaseBox} id="comprar-paquete" aria-labelledby="bundle-title" style={{scrollMarginTop:20}}>
         <span className="eyebrow">CAJA DE MAYOREO · COMPRA COMO INVITADO</span><h1 id="bundle-title">{item.name}</h1><BundleDescription text={item.description}/>
-        <p className="detail-price">{money(item.price)} <small>MXN</small></p><p>Precio por caja con IVA · Envío aparte</p>
-        <dl className={styles.facts}><div><dt>Pares por caja</dt><dd>{item.pieces}</dd></div><div><dt>Costo promedio por par</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
+        <p className="detail-price">{money(item.price)} <small>MXN</small></p><p>Referencia por 1 caja con IVA · Envío aparte. Al combinar cajas y pares individuales, ajustamos el precio por categoría.</p>
+        <dl className={styles.facts}><div><dt>Pares por caja</dt><dd>{item.pieces}</dd></div><div><dt>Promedio de referencia por par</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
         <AddButton key={item.id} item={item} chooseQuantity/>
         <PurchaseConfidence bundleId={item.id}/>
       </section>
     </div>
     {related.length>0&&<section className={styles.content} aria-labelledby="related-title"><h2 id="related-title">Otras opciones para tu negocio</h2><p>Paquetes disponibles con productos en común o una inversión cercana. Compara el contenido antes de elegir.</p><div className="product-grid">{related.map(candidate=><Card key={candidate.id} item={candidate}/>)}</div><Link className="text-link" href="/paquetes">Comparar todos los paquetes →</Link></section>}
-    <div className={styles.mobilePurchase}><div><strong>{money(item.price)}</strong><small>{item.pieces} pares · IVA incluido · Más envío</small></div><a href="#comprar-paquete">Elegir cantidad ↑</a></div>
+    <div className={styles.mobilePurchase}><div><strong>{money(item.price)}</strong><small>Referencia por 1 caja · {item.pieces} pares · Más envío</small></div><a href="#comprar-paquete">Elegir cantidad ↑</a></div>
   </main>;
 }

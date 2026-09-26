@@ -14,7 +14,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
             <tr>
               <th>Producto</th>
               <th>Piezas</th>
-              <th>Precio asignado</th>
+              <th>Referencia / par</th>
               <th>Importe</th>
             </tr>
           </thead>
@@ -39,12 +39,11 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
         </table>
       </div>
       <div className="bundle-total">
-        <span>Precio fijo de la caja</span>
+        <span>Referencia por una caja</span>
         <strong>{money(item.price)} MXN</strong>
       </div>
       <small>
-        Los precios asignados desglosan el contenido; el precio de compra es el
-        precio fijo de la caja.
+        El precio final se recalcula con todos los pares de la misma categoría de tu pedido, incluidos los individuales y otras cajas. Consulta el total actualizado al elegir la cantidad.
       </small>
       <div className="bundle-measures">
         <span>

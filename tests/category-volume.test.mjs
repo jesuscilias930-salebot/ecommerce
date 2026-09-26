@@ -28,9 +28,24 @@ test('missing rules or stock are not shown as confirmed savings',()=>{
  assert.equal(calculateGroups(products,[{id:-1,quantity:25},{id:-2,quantity:25}])[0].total,null);
  assert.equal(calculateGroups([product(1)],[{id:-1,quantity:1001}])[0].total,null);
 });
-test('category count uses all cart variants, not only a visible search result, and excludes bundles',()=>{
+test('category count uses all cart variants, not only a visible search result; unknown boxes cannot be expanded',()=>{
  const products=[product(1),product(2)];
  const visible=products.filter(p=>p.id===1);
  const group=calculateGroups(products,[{id:-1,quantity:25},{id:-2,quantity:25},{id:8,quantity:10}]).find(g=>g.key===pricingKey(visible[0]));
  assert.equal(group.quantity,50);
+});
+test('box contents combine with loose pairs across genders and remain isolated by category',()=>{
+ const products=[product(1),product(2),product(3,2,20)];
+ const boxes=[{id:8,items:[{productId:1,quantity:25},{productId:3,quantity:10}]}];
+ const groups=calculateGroups(products,[{id:8,quantity:2},{id:-2,quantity:25}],boxes);
+ const caricatura=groups.find(g=>g.key==='category:1');
+ assert.equal(caricatura.quantity,75);
+ assert.equal(caricatura.rows[0].price,8);
+ assert.equal(groups.find(g=>g.key==='category:2').quantity,20);
+});
+test('combined box and loose demand cannot exceed product stock',()=>{
+ const boxes=[{id:8,items:[{productId:1,quantity:600}]}];
+ const [group]=calculateGroups([product(1)],[{id:8,quantity:1},{id:-1,quantity:401}],boxes);
+ assert.equal(group.quantity,1001);
+ assert.equal(group.rows[0].price,null);
 });

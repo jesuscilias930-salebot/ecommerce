@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback } from "react";
+import {useCartQuote} from './use-cart-quote';
+import type {CartQuote} from '@/lib/cart-quote';
 import {completedCart,CHECKOUT_ATTEMPT_KEY} from '@/lib/completed-cart';
 import {
   ShoppingBag,
@@ -26,12 +28,16 @@ import "./purchase-actions.css";
 type Line = { id: number; quantity: number };
 export const Context = createContext<{
   lines: Line[];
+  quote?:CartQuote;
+  quoteError?:string;
+  retryQuote:()=>void;
   change: (id: number, n: number) => void;
   completePurchase: (folio:string) => void;
-}>({ lines: [], change: () => {}, completePurchase:()=>{} });
+}>({retryQuote:()=>{}, lines: [], change: () => {}, completePurchase:()=>{} });
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [ready, setReady] = useState(false);
+  const pricing=useCartQuote(lines,ready);
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("merlyn-cart-v1") || "[]");
@@ -89,7 +95,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     );
   }
   return (
-    <Context.Provider value={{ lines, change, completePurchase }}>{children}</Context.Provider>
+    <Context.Provider value={{ lines, change, completePurchase,...pricing }}>{children}</Context.Provider>
   );
 }
 export function Header() {
@@ -140,12 +146,15 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   const limit = Math.max(0, Math.min(item.available, 99) - quantity);
   const valid = Number.isInteger(amount) && amount >= 1 && amount <= limit;
   const review = chooseQuantity && added && quantity > 0;
+  const preview=useCartQuote([...lines.filter(l=>l.id!==item.id),{id:item.id,quantity:quantity+amount}],chooseQuantity&&valid&&!review);
+  const quotedBox=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
   return (
     <div className="bundle-purchase-actions">
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar
         <input type="number" min={1} max={limit || 1} value={amount} onChange={event=>{setAmount(Number(event.target.value));setAdded(false);}}/>
-        <small>{valid ? `${amount * item.pieces} pares · ${money(amount * item.price)} MXN con IVA, más envío` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
+        <small>{valid ? `${amount * item.pieces} pares · ${quotedBox ? money(quotedBox.unitPrice)+' por caja al combinar con tu carrito' : preview.quoteError || 'Calculando precio con todo tu pedido…'}` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
       </label>}
+      {chooseQuantity&&preview.quote&&<p role="status">Pedido completo: <b>{money(preview.quote.subtotal)} MXN</b> · {preview.quote.totalPairs} pares. IVA incluido; envío aparte.{preview.quote.savings!=null&&preview.quote.savings>0?` Ahorro al combinar: ${money(preview.quote.savings)}.`:''}</p>}
       <button
         type="button"
         className="primary"
@@ -202,7 +211,7 @@ export function Card({ item }: { item: Package }) {
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
         <small>
-          Promedio {item.pieces > 0 ? money(item.price / item.pieces) : '—'} por par · IVA incluido · Envío aparte
+          Referencia por 1 caja · IVA incluido · Envío aparte. El precio se ajusta al sumar cajas y pares sueltos de la misma categoría.
         </small>
         <AddButton item={item} />
       </div>
