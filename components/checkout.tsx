@@ -61,7 +61,7 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
     attempt.current={body:orderBody,id};
    }
    try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(attempt.current));}catch{}
-   const response=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...JSON.parse(orderBody),requestId:attempt.current.id,payment,marketing:payment==='stripe'?checkoutAttribution():undefined}),signal:AbortSignal.timeout(25000)});
+   const response=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...JSON.parse(orderBody),requestId:attempt.current.id,payment,marketing:payment==='stripe'?await checkoutAttribution():undefined}),signal:AbortSignal.timeout(25000)});
    const data=await response.json();
    if(!response.ok)throw Error(data.error||'No se pudo registrar el pedido.');
    if(payment==='stripe'){

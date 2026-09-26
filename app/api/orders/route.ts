@@ -3,7 +3,6 @@ import {getCatalog} from '@/lib/catalog';
 import {validateAddress} from '@/lib/shipping-address';
 import {getStoreFeatures} from '@/lib/store-features';
 import {isAllowedStoreOrigin} from '@/lib/store-origin.mjs';
-import {allowsMetaAttribution} from '@/lib/meta-test-mode.mjs';
 
 const SALES_NUMBER='522721285563';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -13,7 +12,8 @@ export async function POST(request:Request) {
   const raw=await request.text();
   if(raw.length>20000)return Response.json({error:'Pedido demasiado grande'},{status:413});
   const b=JSON.parse(raw);
-  if(b?.payment==='stripe'&&!(await getStoreFeatures()).cardPaymentsEnabled)return Response.json({error:'Los pagos con tarjeta no están disponibles. Concluye tu pedido por WhatsApp.'},{status:403});
+  const features=b?.payment==='stripe'?await getStoreFeatures():{cardPaymentsEnabled:false,metaEventsEnabled:false};
+  if(b?.payment==='stripe'&&!features.cardPaymentsEnabled)return Response.json({error:'Los pagos con tarjeta no están disponibles. Concluye tu pedido por WhatsApp.'},{status:403});
   let shippingAddress;
   try{if(b.payment==='stripe'||b.shippingAddress)shippingAddress=validateAddress(b.shippingAddress);}catch(e){return Response.json({error:e instanceof Error?e.message:'Dirección inválida'},{status:400});}
   if(b?.payment!==undefined&&b.payment!=='stripe'&&b.payment!=='whatsapp')throw Error('Invalid payment');
@@ -24,7 +24,7 @@ export async function POST(request:Request) {
   if(b.payment==='stripe'&&b.products.length+b.bundles.length>100)return Response.json({error:'Stripe admite hasta 100 líneas por pedido. Continúa por WhatsApp.'},{status:400});
   const order=await stockApi(b.payment==='stripe'?'/public/store/checkout':'/public/store/orders',{
    requestId:b.requestId,
-   marketing:b.payment==='stripe'&&allowsMetaAttribution(request.headers.get('cookie')||'',b.marketing)?{
+   marketing:b.payment==='stripe'&&features.metaEventsEnabled&&b.marketing?.consent===true?{
     consent:true,
     fbp:typeof b.marketing.fbp==='string'?b.marketing.fbp.slice(0,255):undefined,
     fbc:typeof b.marketing.fbc==='string'?b.marketing.fbc.slice(0,255):undefined,
