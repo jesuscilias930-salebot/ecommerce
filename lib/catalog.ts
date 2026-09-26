@@ -1,3 +1,4 @@
+import {storeRequestIdentity} from '@/lib/store-request-identity';
 import 'server-only';
 import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
@@ -28,7 +29,7 @@ export async function getCatalog(budget: Budget = 'all'): Promise<{packages: Pac
  try {
   const ids=(process.env.STOREFRONT_BUNDLE_IDS||'').split(',').map(Number).filter(n=>Number.isInteger(n)&&n>0);
   async function read<T>(path:string):Promise<T> {
-   const response=await fetch(`${base!.replace(/\/$/,'')}${path}`,{headers:{'X-Store-Tenant':tenant},cache:'no-store',signal:AbortSignal.timeout(10000)});
+   const response=await fetch(`${base!.replace(/\/$/,'')}${path}`,{headers:{...await storeRequestIdentity(),'X-Store-Tenant':tenant},cache:'no-store',signal:AbortSignal.timeout(10000)});
    if(!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
    return response.json();
   }

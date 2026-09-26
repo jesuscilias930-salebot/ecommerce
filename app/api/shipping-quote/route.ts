@@ -1,3 +1,4 @@
+import {storeRequestIdentity} from '@/lib/store-request-identity';
 import { validateAddress } from '@/lib/shipping-address';
 import { getStoreTenant } from '@/lib/store-tenant';
 import { isAllowedStoreOrigin } from '@/lib/store-origin.mjs';
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     const base=process.env.SOCK_CONTROL_URL;
     if(!base || (body.products.length&&process.env.STOREFRONT_PRODUCTS_MOCK==='true') || (body.bundles.length&&process.env.STOREFRONT_BUNDLES_MOCK==='true'))throw Error('Las tarifas reales requieren productos del inventario, no datos de demostración.');
     const payload={destination:validateAddress(body.destination),products:body.products.map((p:{productId:number;quantity:number})=>({productId:p.productId,quantity:p.quantity})),bundles:body.bundles.map((b:{bundleId:number;quantity:number})=>({bundleId:b.bundleId,quantity:b.quantity}))};
-    const response=await fetch(`${base.replace(/\/$/,'')}/public/store/shipping-quote`,{method:'POST',headers:{'Content-Type':'application/json','X-Store-Tenant':await getStoreTenant()},body:JSON.stringify(payload),cache:'no-store',signal:AbortSignal.timeout(45000)});
+    const response=await fetch(`${base.replace(/\/$/,'')}/public/store/shipping-quote`,{method:'POST',headers:{...await storeRequestIdentity(),'Content-Type':'application/json','X-Store-Tenant':await getStoreTenant()},body:JSON.stringify(payload),cache:'no-store',signal:AbortSignal.timeout(45000)});
     const data=await response.json().catch(()=>null);
     if(!response.ok)return Response.json({error:response.status===400&&typeof data?.message==='string'?data.message:'No pudimos consultar el envío. Intenta nuevamente en un momento.'},{status:response.status===429?429:400,headers});
     return Response.json(data,{headers});

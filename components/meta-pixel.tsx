@@ -76,7 +76,7 @@ export function MetaPixel(){
   {ready&&(consent===null||editing)&&<section className={styles.banner} aria-label="Cookies publicitarias">
    <div><strong>Tú decides sobre las cookies publicitarias</strong><p>Con tu permiso compartimos con Meta visitas y compras confirmadas, su importe y productos, junto con identificadores publicitarios y el tipo de navegador, para medir anuncios. No compartimos datos de tarjeta, dirección, correo ni teléfono. Puedes rechazarlo y comprar normalmente o cambiar tu elección en Preferencias de cookies antes de iniciar el pago.</p><a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer">Política de privacidad de Meta</a></div>
    <nav aria-label="Privacidad y cookies"><Link href="/privacidad">Aviso de privacidad</Link> · <Link href="/cookies">Política de cookies</Link></nav>
-   <div className={styles.actions}><button type="button" onClick={()=>choose('rejected')}>Rechazar</button><button type="button" onClick={()=>choose('accepted')}>Aceptar publicidad</button></div>
+   <div className={styles.actions}><button type="button" onClick={()=>choose('rejected')}>Rechazar</button><button type="button" onClick={()=>choose('accepted')}>Aceptar cookies</button></div>
   </section>}
  </>;
 }

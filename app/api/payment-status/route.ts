@@ -1,3 +1,4 @@
+import {storeRequestIdentity} from '@/lib/store-request-identity';
 import { getStoreTenant } from '@/lib/store-tenant';
 export async function GET(request: Request) {
   const sessionId = new URL(request.url).searchParams.get("session_id");
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
         "/public/store/payment-status?sessionId=" +
         encodeURIComponent(sessionId),
       {
-        headers: { "X-Store-Tenant": await getStoreTenant() },
+        headers: {...await storeRequestIdentity(), "X-Store-Tenant": await getStoreTenant() },
         cache: "no-store",
         signal: AbortSignal.timeout(10000),
       },
