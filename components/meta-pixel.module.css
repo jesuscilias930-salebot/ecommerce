@@ -1,4 +1,6 @@
 .settings{display:block;margin:16px auto;padding:10px 14px;background:#fff;color:#183c32;border:1px solid #dedfd6;border-radius:10px;cursor:pointer;font:inherit;font-size:13px;}
+.testMode{position:fixed;bottom:12px;left:12px;z-index:999;display:flex;flex-direction:column;gap:6px;width:min(400px,calc(100vw - 24px));padding:14px 16px;background:#fff5d6;color:#183c32;border:1px solid #c4a861;border-radius:12px;box-shadow:0 4px 20px #183c3220;font-size:12px;line-height:1.5;}
+.testMode strong{font-size:14px;}.testMode a{color:#183c32;text-decoration:underline;font-weight:600;}.testMode a:focus-visible{outline:3px solid #296c51;outline-offset:3px;}
 .banner{position:fixed;bottom:16px;left:16px;right:16px;z-index:1000;max-width:960px;margin:auto;padding:20px;background:#fff;color:#183c32;border:1px solid #dedfd6;border-radius:16px;box-shadow:0 8px 40px #183c3233;display:flex;align-items:center;gap:24px;max-height:80dvh;overflow:auto;}
 .banner p{font-size:14px;line-height:1.5;margin:8px 0;}.banner a{font-size:13px;color:#1c513e;text-decoration:underline;}
 .actions{display:flex;gap:10px;flex-shrink:0;}.actions button{font:inherit;font-size:14px;padding:12px;border:1px solid #1c513e;border-radius:10px;background:white;color:#1c513e;cursor:pointer;}.actions button:last-child{background:#1c513e;color:white;}

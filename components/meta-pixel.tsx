@@ -1,9 +1,10 @@
 "use client";
 
-import {useEffect,useRef,useState} from 'react';
-import {usePathname} from 'next/navigation';
+import {Suspense,useEffect,useRef,useState} from 'react';
+import {usePathname,useSearchParams} from 'next/navigation';
 import styles from './meta-pixel.module.css';
 import {MARKETING_CONSENT_KEY} from '@/lib/meta-attribution';
+import {isMetaTestMode} from '@/lib/meta-test-mode.mjs';
 import Link from 'next/link';
 
 const PIXEL_ID='2294997607982799';
@@ -28,7 +29,13 @@ function loadPixel(){
 }
 
 export function MetaPixel(){
+ return <Suspense fallback={null}><MetaPixelContent/></Suspense>;
+}
+function MetaPixelContent(){
  const pathname=usePathname();
+ const search=useSearchParams().toString();
+ const exitSearch=new URLSearchParams(search);exitSearch.set('meta_test','0');
+ const [testMode,setTestMode]=useState(false);
  const [consent,setConsent]=useState<Consent|null>(null),[ready,setReady]=useState(false),[editing,setEditing]=useState(false);
  const lastPage=useRef<string|null>(null);
  const active=useRef(false);
@@ -38,14 +45,16 @@ export function MetaPixel(){
   setReady(true);
  },[]);
  useEffect(()=>{
-  active.current=consent==='accepted';
+  const testing=isMetaTestMode();
+  setTestMode(testing);
+  active.current=consent==='accepted'&&!testing;
   // Never send checkout return URLs, which can contain payment-session identifiers.
   const sensitive=pathname.startsWith('/pago/')||[...new URLSearchParams(window.location.search).keys()].some(k=>/token|session|email|phone|address/i.test(k));
-  if(consent!=='accepted'){window.fbq?.('consent','revoke');lastPage.current=null;return;}
+  if(testing||consent!=='accepted'){window.fbq?.('consent','revoke');lastPage.current=null;return;}
   if(sensitive||!['tienda.merlyncilias.com','ecommerce-9w7o.onrender.com'].includes(window.location.hostname))return;
   let cancelled=false;
   void loadPixel().then(()=>{
-   if(cancelled||!active.current)return;
+   if(cancelled||!active.current||isMetaTestMode())return;
    window.fbq?.('consent','grant');
    if(!initialized){
     window.fbq?.('set','autoConfig',false,PIXEL_ID);
@@ -54,16 +63,17 @@ export function MetaPixel(){
    if(lastPage.current!==pathname){window.fbq?.('track','PageView');lastPage.current=pathname;}
   }).catch(()=>{/* Ad blockers or Meta outages must never prevent shopping. */});
   return()=>{cancelled=true;};
- },[consent,pathname]);
+ },[consent,pathname,search]);
  function choose(value:Consent){
-  active.current=value==='accepted';
-  if(value==='rejected')window.fbq?.('consent','revoke');
+  active.current=value==='accepted'&&!isMetaTestMode();
+  if(!active.current)window.fbq?.('consent','revoke');
   try{localStorage.setItem(CONSENT_KEY,value);}catch{}
   setConsent(value);setEditing(false);
  }
  return <>
+  {testMode&&<aside className={styles.testMode} role="status"><strong>Modo de prueba: Meta desactivado</strong><span>No enviamos visitas ni conversiones de nuevos pedidos. Los pagos y pedidos siguen siendo reales si usas producción.</span><a href={`${pathname}?${exitSearch.toString()}`}>Salir del modo de prueba</a></aside>}
   <button type="button" className={styles.settings} onClick={()=>setEditing(true)}>Preferencias de cookies</button>
-  {ready&&(consent===null||editing)&&<section className={styles.banner} aria-label="Cookies publicitarias">
+  {ready&&((!testMode&&consent===null)||editing)&&<section className={styles.banner} aria-label="Cookies publicitarias">
    <div><strong>Tú decides sobre las cookies publicitarias</strong><p>Con tu permiso compartimos con Meta visitas y compras confirmadas, su importe y productos, junto con identificadores publicitarios y el tipo de navegador, para medir anuncios. No compartimos datos de tarjeta, dirección, correo ni teléfono. Puedes rechazarlo y comprar normalmente o cambiar tu elección en Preferencias de cookies antes de iniciar el pago.</p><a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer">Política de privacidad de Meta</a></div>
    <nav aria-label="Privacidad y cookies"><Link href="/privacidad">Aviso de privacidad</Link> · <Link href="/cookies">Política de cookies</Link></nav>
    <div className={styles.actions}><button type="button" onClick={()=>choose('rejected')}>Rechazar</button><button type="button" onClick={()=>choose('accepted')}>Aceptar publicidad</button></div>

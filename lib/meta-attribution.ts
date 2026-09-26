@@ -1,6 +1,8 @@
 export const MARKETING_CONSENT_KEY='merlyn-marketing-consent-v2';
+import {isMetaTestMode} from './meta-test-mode.mjs';
 export function checkoutAttribution(){
  if(typeof window==='undefined')return undefined;
+ if(isMetaTestMode())return {consent:false,testMode:true};
  try{
   if(localStorage.getItem(MARKETING_CONSENT_KEY)!=='accepted')return undefined;
   if(!['tienda.merlyncilias.com','ecommerce-9w7o.onrender.com'].includes(window.location.hostname))return undefined;

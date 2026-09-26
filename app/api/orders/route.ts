@@ -3,6 +3,7 @@ import {getCatalog} from '@/lib/catalog';
 import {validateAddress} from '@/lib/shipping-address';
 import {getStoreFeatures} from '@/lib/store-features';
 import {isAllowedStoreOrigin} from '@/lib/store-origin.mjs';
+import {allowsMetaAttribution} from '@/lib/meta-test-mode.mjs';
 
 const SALES_NUMBER='522721285563';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -23,7 +24,7 @@ export async function POST(request:Request) {
   if(b.payment==='stripe'&&b.products.length+b.bundles.length>100)return Response.json({error:'Stripe admite hasta 100 líneas por pedido. Continúa por WhatsApp.'},{status:400});
   const order=await stockApi(b.payment==='stripe'?'/public/store/checkout':'/public/store/orders',{
    requestId:b.requestId,
-   marketing:b.payment==='stripe'&&b.marketing?.consent===true?{
+   marketing:b.payment==='stripe'&&allowsMetaAttribution(request.headers.get('cookie')||'',b.marketing)?{
     consent:true,
     fbp:typeof b.marketing.fbp==='string'?b.marketing.fbp.slice(0,255):undefined,
     fbc:typeof b.marketing.fbc==='string'?b.marketing.fbc.slice(0,255):undefined,
