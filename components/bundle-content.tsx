@@ -43,7 +43,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
         <strong>{money(item.price)} MXN</strong>
       </div>
       <small>
-        El precio final se recalcula con todos los pares de la misma categoría de tu pedido, incluidos los individuales y otras cajas. Consulta el total actualizado al elegir la cantidad.
+        El precio final suma cajas y pares individuales por categoría combinable. En deportivos y licra, el volumen se calcula por producto, sin mezclar modelos. Consulta el total actualizado al elegir la cantidad.
       </small>
       <div className="bundle-measures">
         <span>

@@ -1,10 +1,11 @@
 import type {Package} from './catalog';
 import type {Original} from './product-catalog';
-export const hasCategoryVolume=(p:Original)=>Number.isInteger(p.categoryId)&&p.categoryId!=null;
+export const individualVolume=(p:Original)=>/deport|licra/.test((p.category||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
+export const hasCategoryVolume=(p:Original)=>!individualVolume(p)&&Number.isInteger(p.categoryId)&&p.categoryId!=null;
 // An absent field indicates an older backend during a rolling deployment.
 // Explicit null means no category: never combine unrelated uncategorized products.
-export const pricingKey=(p:Original)=>hasCategoryVolume(p)?`category:${p.categoryId}`:p.categoryId===undefined&&p.pricingGroup?.trim()?`group:${p.pricingGroup.trim().toLowerCase()}`:`product:${p.id}`;
-export const pricingName=(p:Original)=>hasCategoryVolume(p)?p.category||'Categoría':p.categoryId===undefined&&p.pricingGroup?.trim()||p.name;
+export const pricingKey=(p:Original)=>individualVolume(p)?`product:${p.id}`:hasCategoryVolume(p)?`category:${p.categoryId}`:p.categoryId===undefined&&p.pricingGroup?.trim()?`group:${p.pricingGroup.trim().toLowerCase()}`:`product:${p.id}`;
+export const pricingName=(p:Original)=>individualVolume(p)?p.name:hasCategoryVolume(p)?p.category||'Categoría':p.categoryId===undefined&&p.pricingGroup?.trim()||p.name;
 export function calculateGroups(products:Original[],lines:{id:number;quantity:number}[],packages:Package[]=[]) {
  const boxed=lines.filter(l=>l.id>0).flatMap(l=>(packages.find(p=>p.id===l.id)?.items||[]).map(i=>({id:-(i.productId||0),quantity:i.quantity*l.quantity,product:products.find(p=>p.id===i.productId)})));
  const productDemand=(id:number)=>lines.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0)+boxed.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0);

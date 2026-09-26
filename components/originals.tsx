@@ -1,6 +1,6 @@
 "use client";
 import { LiveSummary } from "./live-summary";
-import { calculateGroups, pricingKey, pricingName, hasCategoryVolume } from "@/lib/live-pricing";
+import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, individualVolume } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
 import { useContext, useState, useId, useEffect } from "react";
@@ -304,7 +304,7 @@ function OriginalCard({
           </table>
         </div>
         <p className="original-volume">
-          {hasCategoryVolume(p) || (p.categoryId===undefined && p.pricingGroup) ? (
+          {hasCategoryVolume(p) || (!individualVolume(p) && p.categoryId===undefined && p.pricingGroup) ? (
             <>
               Combina variantes de <b>{pricingName(p)}</b> para alcanzar el
               siguiente precio.

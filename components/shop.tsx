@@ -210,7 +210,7 @@ export function Card({ item }: { item: Package }) {
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
         <small>
-          Referencia por 1 caja · IVA incluido · Envío aparte. El precio se ajusta al sumar cajas y pares sueltos de la misma categoría.
+          Referencia por 1 caja · IVA incluido · Envío aparte. Cajas y pares sueltos suman por categoría combinable; deportivos y licra suman solo por producto.
         </small>
         <AddButton item={item} />
       </div>

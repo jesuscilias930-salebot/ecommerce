@@ -90,7 +90,7 @@ export function VolumeCart({
             </div>
             {quantityControl(l.id, l.quantity, l.product?.currentStock ?? 0)}
           </div>)}
-          <div className="order-group-total"><span>Individuales de esta categoría · {g.quantity} pares</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
+          <div className="order-group-total"><span>Individuales de este grupo · {g.quantity} pares</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
         </article>)}
         {!addressPage && boxes.map(l => <article className="order-group" key={l.id}>
           <div className="order-item-top">
@@ -100,7 +100,7 @@ export function VolumeCart({
           </div>
           {quantityControl(l.id, l.quantity, l.item?.available ?? 0)}
           {l.item && l.quantity > l.item.available && <p role="alert">Solo hay {l.item.available} cajas disponibles. Ajusta la cantidad.</p>}
-          {l.item && <details className="order-contents"><summary>Ver qué incluye · {l.item.pieces * l.quantity} pares en total</summary><ul>{l.item.items.map((item, index) => <li key={item.id ?? index}><span>{item.name}</span><b>{item.quantity * l.quantity} pares</b></li>)}</ul><p>La tarifa de cada producto ya considera todos los pares de su categoría en el pedido. Contenido de {l.quantity} {l.quantity === 1 ? "caja" : "cajas"}. Todo está incluido en el precio del paquete.</p></details>}
+          {l.item && <details className="order-contents"><summary>Ver qué incluye · {l.item.pieces * l.quantity} pares en total</summary><ul>{l.item.items.map((item, index) => <li key={item.id ?? index}><span>{item.name}</span><b>{item.quantity * l.quantity} pares</b></li>)}</ul><p>La tarifa considera cajas y pares sueltos del grupo. Deportivos y licra acumulan únicamente el mismo producto; no se mezclan. Contenido de {l.quantity} {l.quantity === 1 ? "caja" : "cajas"}. Todo está incluido en el precio del paquete.</p></details>}
         </article>)}
         {showAddress && lines.length > 0 && <CartShipping key={shippingKey} cartKey={shippingKey} blocked={blockedReason} onSelect={estimate => setShipping({key: shippingKey, estimate})}/>}
       </section>

@@ -4,6 +4,17 @@ import {calculateGroups, pricingKey, pricingName} from '../lib/live-pricing.ts';
 import {groupByCategory} from '../lib/product-categories.ts';
 
 const product=(id,categoryId=1,price=10)=>({id,name:`Modelo ${id}`,categoryId,category:'Caricatura',currentStock:1000,rules:[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:null,pricePerUnit:price-2}]});
+test('sports and lycra keep separate product tiers; same product in boxes still counts',()=>{
+ for(const category of ['DEPORTIVAS','Tin deportivo','Calceta deportiva','LICRA','Tin de licra']){
+  const products=[{...product(1),category},{...product(2),category}];
+  let groups=calculateGroups(products,[{id:-1,quantity:25},{id:-2,quantity:25}]);
+  assert.equal(groups.length,2);groups.forEach(g=>{assert.equal(g.quantity,25);assert.equal(g.rows[0].price,10);});
+  groups=calculateGroups(products,[{id:-1,quantity:25},{id:-2,quantity:25},{id:8,quantity:1}],[{id:8,items:[{productId:1,quantity:25}]}]);
+  assert.equal(groups.find(g=>g.key==='product:1').quantity,50);
+  assert.equal(groups.find(g=>g.key==='product:1').rows[0].price,8);
+  assert.equal(groups.find(g=>g.key==='product:2').rows[0].price,10);
+ }
+});
 test('25 dama + 25 caballero use 50 pairs and each model retains its own tariff',()=>{
  const products=[product(1),product(2,1,12)];
  const [group]=calculateGroups(products,[{id:-1,quantity:25},{id:-2,quantity:25}]);
