@@ -2,13 +2,13 @@ import {storeRequestIdentity} from '@/lib/store-request-identity';
 import 'server-only';
 import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
-export type Package = { description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; price: number; available: number; pieces: number; boxLengthCm?:number|null; boxWidthCm?:number|null; boxHeightCm?:number|null; boxWeightKg?:number|null; items: { id?:number; productId?:number; name: string; quantity: number; assignedUnitPrice?:number|null }[]; tone: number };
-type Bundle = { description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; fixedPrice: number | string; boxLengthCm?:number|string|null; boxWidthCm?:number|string|null; boxHeightCm?:number|string|null; boxWeightKg?:number|string|null; items: { id?:number; productId: number; productName: string; category?:string|null; gender?:string|null; quantity: number; assignedUnitPrice?:number|string|null }[] };
+export type Package = { storeCategory?:string|null; description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; price: number; available: number; pieces: number; boxLengthCm?:number|null; boxWidthCm?:number|null; boxHeightCm?:number|null; boxWeightKg?:number|null; items: { categoryId?:number|null; category?:string|null; assorted?:boolean; id?:number; productId?:number; name: string; quantity: number; assignedUnitPrice?:number|null }[]; tone: number };
+type Bundle = { available?:number; storeCategory?:string|null; description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; fixedPrice: number | string; boxLengthCm?:number|string|null; boxWidthCm?:number|string|null; boxHeightCm?:number|string|null; boxWeightKg?:number|string|null; items: { categoryId?:number|null; category?:string|null; assorted?:boolean; id?:number; productId: number; productName: string; gender?:string|null; quantity: number; assignedUnitPrice?:number|string|null }[] };
 type Product = { id: number; currentStock: number };
 const numberOrNull=(value:unknown)=>value==null||value===''||!Number.isFinite(Number(value))?null:Number(value);
-const bundleDetails=(b:Bundle)=>({description:b.description,imageUrl:b.imageUrl,imageUrls:b.imageUrls,
+const bundleDetails=(b:Bundle)=>({storeCategory:b.storeCategory,description:b.description,imageUrl:b.imageUrl,imageUrls:b.imageUrls,
  boxLengthCm:numberOrNull(b.boxLengthCm),boxWidthCm:numberOrNull(b.boxWidthCm),boxHeightCm:numberOrNull(b.boxHeightCm),boxWeightKg:numberOrNull(b.boxWeightKg),
- items:b.items.map(i=>({id:i.id,productId:i.productId,name:productDisplayName({name:i.productName,category:i.category,gender:i.gender}),quantity:i.quantity,assignedUnitPrice:numberOrNull(i.assignedUnitPrice)}))
+ items:b.items.map(i=>({id:i.id,productId:i.productId,categoryId:i.categoryId,category:i.category,assorted:!!i.assorted,name:i.assorted?"Caricatura surtida · niño a adulto, todos los géneros según existencias":productDisplayName({name:i.productName,category:i.category,gender:i.gender}),quantity:i.quantity,assignedUnitPrice:numberOrNull(i.assignedUnitPrice)}))
 });
 const demoBundles:Bundle[]=[
  {id:1,name:'Tu primer negocio',fixedPrice:1290,boxLengthCm:30,boxWidthCm:25,boxHeightCm:20,boxWeightKg:2.4,items:[{id:1,productId:900000001,productName:'Calcetín caricatura dama',quantity:30,assignedUnitPrice:16},{id:2,productId:900000002,productName:'Calcetín caricatura caballero',quantity:30,assignedUnitPrice:16},{id:3,productId:900000003,productName:'Calcetín deportivo blanco',quantity:20,assignedUnitPrice:16.5}]},
@@ -37,7 +37,7 @@ export async function getCatalog(budget: Budget = 'all'): Promise<{packages: Pac
   const stock=new Map(products.map(p=>[p.id,p.currentStock]));
   const packages=bundles.filter(b=>(!ids.length||ids.includes(b.id))&&Number(b.fixedPrice)>0&&b.items.length>0&&b.items.every(i=>Number.isInteger(i.quantity)&&i.quantity>0)).map((b,index)=>{
    const quantities=new Map<number,number>(); b.items.forEach(i=>quantities.set(i.productId,(quantities.get(i.productId)||0)+i.quantity));
-   return {id:b.id,name:b.name,price:Number(b.fixedPrice),available:Math.max(0,Math.min(...Array.from(quantities,([id,qty])=>Math.floor((stock.get(id)||0)/qty)))),pieces:b.items.reduce((n,i)=>n+i.quantity,0),...bundleDetails(b),tone:index%4};
+   return {id:b.id,name:b.name,price:Number(b.fixedPrice),available:b.available??Math.max(0,Math.min(...Array.from(quantities,([id,qty])=>Math.floor((stock.get(id)||0)/qty)))),pieces:b.items.reduce((n,i)=>n+i.quantity,0),...bundleDetails(b),tone:index%4};
   });
   return {packages:packages.filter(p=>p.available>0),demo:false};
  } catch { return {packages:[],demo:false,error:'No pudimos cargar los paquetes. Intenta nuevamente en unos momentos.'}; }

@@ -6,7 +6,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
     <section className="bundle-breakdown">
       {showHeading && <h3>Todo lo que incluye tu caja</h3>}
       <p>
-        {item.items.length} productos · {item.pieces} piezas en total
+        {item.items.length} productos · {item.pieces} unidades (pares de calcetines o shorts)
       </p>
       <div className="bundle-table-wrap">
         <table>
@@ -14,7 +14,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
             <tr>
               <th>Producto</th>
               <th>Piezas</th>
-              <th>Referencia / par</th>
+              <th>Referencia / unidad</th>
               <th>Importe</th>
             </tr>
           </thead>
@@ -43,7 +43,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
         <strong>{money(item.price)} MXN</strong>
       </div>
       <small>
-        El precio final suma cajas y pares individuales por categoría combinable. En deportivos y licra, el volumen se calcula por producto, sin mezclar modelos. Consulta el total actualizado al elegir la cantidad.
+        El precio final suma cajas e individuales por categoría combinable. En deportivos y licra, el volumen se calcula por producto. Shorts caballero con y sin cierre combinan entre sí; dama por separado. Consulta el total actualizado al elegir la cantidad.
       </small>
       <div className="bundle-measures">
         <span>

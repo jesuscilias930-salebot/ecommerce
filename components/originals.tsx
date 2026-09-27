@@ -1,6 +1,6 @@
 "use client";
 import { LiveSummary } from "./live-summary";
-import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, individualVolume } from "@/lib/live-pricing";
+import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, individualVolume, shortProduct } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
 import { useContext, useState, useId, useEffect } from "react";
@@ -191,11 +191,13 @@ function OriginalCard({
 }) {
   const { lines, change } = useContext(Context);
   const quantity = lines.find((l) => l.id === -p.id)?.quantity || 0;
+  const unit = shortProduct(p) ? 'pieza' : 'par';
+  const units = shortProduct(p) ? 'piezas' : 'pares';
   const [amount, setAmount] = useState(1);
   const inputId = useId();
   const max = Math.max(
     0,
-    Math.min(p.currentStock - quantity - lines.filter(l=>l.id>0).reduce((n,l)=>n+(packages.find(b=>b.id===l.id)?.items.filter(i=>i.productId===p.id).reduce((s,i)=>s+i.quantity,0)||0)*l.quantity,0), 100000 - quantity),
+    Math.min(p.currentStock - quantity - lines.filter(l=>l.id>0).reduce((n,l)=>n+(packages.find(b=>b.id===l.id)?.items.filter(i=>i.productId===p.id&&!i.assorted).reduce((s,i)=>s+i.quantity,0)||0)*l.quantity,0), 100000 - quantity),
   );
   const valid =
     !!p.rules.length &&
@@ -248,7 +250,7 @@ function OriginalCard({
             <>
               <small>Desde</small>
               <strong>{money(Math.min(...prices))}</strong>
-              <small>MXN / par</small>
+              <small>MXN / {unit}</small>
             </>
           ) : (
             <small>Precio por configurar</small>
@@ -258,15 +260,15 @@ function OriginalCard({
 
           {valid && proposedRow?.price != null ? (
             <>
-              <b>Pares en carrito {quantity}
-                <br></br> Precio por par {money(proposedRow.price)} MXN</b>                    
+              <b>En carrito: {quantity} {units}
+                <br></br> Precio por {unit} {money(proposedRow.price)} MXN</b>
             </>
           ) : (
             <p>Ingresa una cantidad disponible para calcular.</p>
           )}
           {current?.price != null && (
             <small>
-              En el carrito: {quantity} pares × {money(current.price)} = {money((quantity * current.price))}
+              En el carrito: {quantity} {units} × {money(current.price)} = {money((quantity * current.price))}
             </small>
           )}
         </div>
@@ -275,8 +277,8 @@ function OriginalCard({
             <caption>Tarifa resaltada: vista previa del grupo</caption>
             <thead>
               <tr>
-                <th>Pares</th>
-                <th>Precio / par</th>
+                <th>{shortProduct(p) ? 'Piezas' : 'Pares'}</th>
+                <th>Precio / {unit}</th>
               </tr>
             </thead>
             <tbody>
@@ -295,7 +297,7 @@ function OriginalCard({
                 >
                   <td>
                     {r.minQuantity}
-                    {r.maxQuantity === null ? "+" : `–${r.maxQuantity}`}
+                    {r.maxQuantity === null || r.maxQuantity === 2147483647 ? "+" : `–${r.maxQuantity}`}
                   </td>
                   <td>{money(Number(r.pricePerUnit))}</td>
                 </tr>
@@ -304,7 +306,7 @@ function OriginalCard({
           </table>
         </div>
         <p className="original-volume">
-          {hasCategoryVolume(p) || (!individualVolume(p) && p.categoryId===undefined && p.pricingGroup) ? (
+          {pricingKey(p)==="shorts:caballero" ? "Los shorts de caballero con y sin cierre suman para tu tarifa. Dama se calcula por separado." : hasCategoryVolume(p) || (!shortProduct(p) && !individualVolume(p) && p.categoryId===undefined && p.pricingGroup) ? (
             <>
               Combina variantes de <b>{pricingName(p)}</b> para alcanzar el
               siguiente precio.
@@ -316,7 +318,7 @@ function OriginalCard({
         <div className="original-purchase">
           <div className="original-quantity-row">
             <label htmlFor={inputId}>
-              Cantidad <small>(pares)</small>
+              Cantidad <small>({units})</small>
             </label>
             <div className="original-stepper">
               <button
@@ -349,11 +351,11 @@ function OriginalCard({
                 <>
                   <p>
                     ¡Agrega {nextTier.minQuantity - (proposed?.quantity || 0)}{" "}
-                    pares más del grupo <b>{pricingName(p)}</b> y
+                    {units} más del grupo <b>{pricingName(p)}</b> y
                     ahorra{" "}
                     <b>
                       {money(proposedRow.price - Number(nextTier.pricePerUnit))}{" "}
-                      por par de este modelo
+                      por {unit} de este modelo
                     </b>
                     !
                   </p>
@@ -381,7 +383,7 @@ function OriginalCard({
             {quantity > 0 && (
               <>
                 <Check size={13} />
-                {quantity} pares en tu carrito
+                {quantity} {units} en tu carrito
               </>
             )}
           </p>

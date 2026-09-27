@@ -16,6 +16,7 @@ import {
   Search,
   Menu,
 } from "lucide-react";
+import {packageCategories} from "@/lib/package-categories";
 import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
 import { BoxArt } from "./box-art";
@@ -151,9 +152,9 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
     <div className="bundle-purchase-actions">
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar
         <input type="number" min={1} max={limit || 1} value={amount} onChange={event=>{setAmount(Number(event.target.value));setAdded(false);}}/>
-        <small>{valid ? `${amount * item.pieces} pares · ${quotedBox ? money(quotedBox.unitPrice)+' por caja al combinar con tu carrito' : preview.quoteError || 'Calculando precio con todo tu pedido…'}` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
+        <small>{valid ? `${amount * item.pieces} unidades · ${quotedBox ? money(quotedBox.unitPrice)+' por caja al combinar con tu carrito' : preview.quoteError || 'Calculando precio con todo tu pedido…'}` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
       </label>}
-      {chooseQuantity&&preview.quote&&<p role="status">Pedido completo: <b>{money(preview.quote.subtotal)} MXN</b> · {preview.quote.totalPairs} pares. IVA incluido; envío aparte.{preview.quote.savings!=null&&preview.quote.savings>0?` Ahorro al combinar: ${money(preview.quote.savings)}.`:''}</p>}
+      {chooseQuantity&&preview.quote&&<p role="status">Pedido completo: <b>{money(preview.quote.subtotal)} MXN</b> · {preview.quote.totalPairs} unidades. IVA incluido; envío aparte.{preview.quote.savings!=null&&preview.quote.savings>0?` Ahorro al combinar: ${money(preview.quote.savings)}.`:''}</p>}
       <button
         type="button"
         className="primary"
@@ -210,12 +211,15 @@ export function Card({ item }: { item: Package }) {
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
         <small>
-          Referencia por 1 caja · IVA incluido · Envío aparte. Cajas y pares sueltos suman por categoría combinable; deportivos y licra suman solo por producto.
+          Referencia por 1 caja · IVA incluido · Envío aparte. Cajas y pares sueltos suman por categoría combinable; deportivos y licra suman solo por producto. Shorts caballero combinan entre sí; dama por separado.
         </small>
         <AddButton item={item} />
       </div>
     </article>
   );
+}
+export function PackageSections({items,limitPerCategory}:{items:Package[];limitPerCategory?:number}) {
+ return <div>{packageCategories(items).map(group=><section key={group.name} style={{marginBottom:40}} aria-label={group.name}><div className="section-heading"><h3>{group.name}</h3><span>{group.items.length} paquetes</span></div><div className="product-grid">{group.items.slice(0,limitPerCategory).map(item=><Card key={item.id} item={item}/>)}</div></section>)}</div>;
 }
 export function Catalog({ items, budget = "all", error, initialQuery = '' }: { items: Package[]; budget?: string; error?: string; initialQuery?: string }) {
   const router = useRouter();
@@ -232,7 +236,7 @@ export function Catalog({ items, budget = "all", error, initialQuery = '' }: { i
   const filtered = items
     .filter(
       (p) =>
-        matchesSearch([p.name, p.description || '', ...p.items.map(item=>item.name)].join(' '), query),
+        matchesSearch([p.name, p.storeCategory || '', p.description || '', ...p.items.map(item=>item.name)].join(' '), query),
     )
     .sort((a, b) =>
       sort === "asc"
@@ -282,8 +286,8 @@ export function Catalog({ items, budget = "all", error, initialQuery = '' }: { i
             <option value="default">Orden del catálogo</option>
             <option value="asc">Menor precio</option>
             <option value="desc">Mayor precio</option>
-            <option value="unit">Menor costo promedio por par</option>
-            <option value="pieces">Más pares por caja</option>
+            <option value="unit">Menor costo promedio por unidad</option>
+            <option value="pieces">Más unidades por caja</option>
           </select>
         </div>
       </div>
@@ -291,10 +295,8 @@ export function Catalog({ items, budget = "all", error, initialQuery = '' }: { i
         {pending ? "Consultando paquetes…" : error ? "No se pudo cargar el catálogo" : `${filtered.length} paquetes para empezar`}
       </p>
       {error && <div role="alert"><p>{error}</p><button className="primary" disabled={pending} onClick={() => startTransition(() => router.refresh())}>Reintentar</button></div>}
-      <div className="product-grid" aria-busy={pending} inert={pending} style={{ opacity: pending ? .55 : 1 }}>
-        {filtered.map((p) => (
-          <Card key={p.id} item={p}/>
-        ))}
+      <div aria-busy={pending} inert={pending} style={{ opacity: pending ? .55 : 1 }}>
+        <PackageSections items={filtered}/>
       </div>
       {!filtered.length && !error && !pending && (
         <div className="empty">

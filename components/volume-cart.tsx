@@ -68,7 +68,7 @@ export function VolumeCart({
   const demoOrder = !!quote?.demo || (demo && boxes.length > 0);
   const blockedReason=demoOrder?'Modo demostración: los productos ficticios no generan mensajes de compra.':!valid?'Agrega productos y espera una cotización válida para continuar.':undefined;
   const quantityControl = (id: number, quantity: number, max: number) => (
-    <CartQuantity quantity={quantity} max={max} unit={id<0?"pares":"cajas"} name={(id<0?selected.find(l=>l.id===id)?.name:boxes.find(l=>l.id===id)?.item?.name)||"Artículo no disponible"} onChange={n=>change(id,n)}/>
+    <CartQuantity quantity={quantity} max={max} unit={id<0?"unidades":"cajas"} name={(id<0?selected.find(l=>l.id===id)?.name:boxes.find(l=>l.id===id)?.item?.name)||"Artículo no disponible"} onChange={n=>change(id,n)}/>
   );
   return (
     <div className="cart-layout order-cart">
@@ -81,7 +81,7 @@ export function VolumeCart({
         </div>}
         {!addressPage && quote && <CategorySavings quote={quote}/>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
-          <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} pares</span></header>
+          <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>
           {g.members.map(l => <div className="order-product" key={l.id}>
             <div className="order-item-top">
               <div className="order-thumb">{l.product?.imageUrl ? <img src={l.product.imageUrl} alt="" /> : <span aria-hidden="true">◈</span>}</div>
@@ -90,7 +90,7 @@ export function VolumeCart({
             </div>
             {quantityControl(l.id, l.quantity, l.product?.currentStock ?? 0)}
           </div>)}
-          <div className="order-group-total"><span>Individuales de este grupo · {g.quantity} pares</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
+          <div className="order-group-total"><span>Individuales de este grupo · {g.quantity} unidades</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
         </article>)}
         {!addressPage && boxes.map(l => <article className="order-group" key={l.id}>
           <div className="order-item-top">
@@ -100,7 +100,7 @@ export function VolumeCart({
           </div>
           {quantityControl(l.id, l.quantity, l.item?.available ?? 0)}
           {l.item && l.quantity > l.item.available && <p role="alert">Solo hay {l.item.available} cajas disponibles. Ajusta la cantidad.</p>}
-          {l.item && <details className="order-contents"><summary>Ver qué incluye · {l.item.pieces * l.quantity} pares en total</summary><ul>{l.item.items.map((item, index) => <li key={item.id ?? index}><span>{item.name}</span><b>{item.quantity * l.quantity} pares</b></li>)}</ul><p>La tarifa considera cajas y pares sueltos del grupo. Deportivos y licra acumulan únicamente el mismo producto; no se mezclan. Contenido de {l.quantity} {l.quantity === 1 ? "caja" : "cajas"}. Todo está incluido en el precio del paquete.</p></details>}
+          {l.item && <details className="order-contents"><summary>Ver qué incluye · {l.item.pieces * l.quantity} unidades en total</summary><ul>{l.item.items.map((item, index) => <li key={item.id ?? index}><span>{item.name}</span><b>{item.quantity * l.quantity} unidades</b></li>)}</ul><p>La tarifa considera cajas y pares sueltos del grupo. Deportivos y licra acumulan únicamente el mismo producto; no se mezclan. Contenido de {l.quantity} {l.quantity === 1 ? "caja" : "cajas"}. Cada unidad equivale a un par de calcetines o a un short. Todo está incluido en el precio del paquete.</p></details>}
         </article>)}
         {showAddress && lines.length > 0 && <CartShipping key={shippingKey} cartKey={shippingKey} blocked={blockedReason} onSelect={estimate => setShipping({key: shippingKey, estimate})}/>}
       </section>
@@ -108,9 +108,9 @@ export function VolumeCart({
         <span className="order-kind">Tu compra, en resumen</span><h2>Resumen del pedido</h2>
         {demoOrder && <p role="status">Demostración: estos artículos no generan pedidos reales.</p>}
         <details className="summary-items"><summary>{lines.length} {lines.length === 1 ? "artículo" : "artículos"} · Ver detalle</summary>
-          <ul>{selected.map(l => <li key={l.id}><span>{l.quantity} pares · {l.name}</span><b>{l.q ? money(Number(l.q.subtotal)) : "—"}</b></li>)}{boxes.map(l => <li key={l.id}><span>{l.quantity} × {l.item?.name || "Caja no disponible"}</span><b>{l.q ? money(l.q.subtotal) : "—"}</b></li>)}</ul>
+          <ul>{selected.map(l => <li key={l.id}><span>{l.quantity} unidades · {l.name}</span><b>{l.q ? money(Number(l.q.subtotal)) : "—"}</b></li>)}{boxes.map(l => <li key={l.id}><span>{l.quantity} × {l.item?.name || "Caja no disponible"}</span><b>{l.q ? money(l.q.subtotal) : "—"}</b></li>)}</ul>
         </details>
-        <div><span>Cajas e individuales · {quote?.totalPairs ?? "—"} pares</span><b>{total === null ? "Calculando…" : money(total)}</b></div>
+        <div><span>Cajas e individuales · {quote?.totalPairs ?? "—"} unidades</span><b>{total === null ? "Calculando…" : money(total)}</b></div>
         <div><span>Envío</span><span>{addressPage ? estimate ? money(estimate.price) : "Elige una tarifa" : "En el siguiente paso"}</span></div>
         {quote?.savings!=null&&quote.savings>0&&<div><span>Ahorro al combinar (ya incluido)</span><b>−{money(quote.savings)}</b></div>}
         <div className="order-final" aria-live="polite"><span>{estimate ? "Total a pagar" : "Subtotal"}</span><b>{total === null ? "—" : money((Math.round(total * 100) + Math.round((estimate?.price || 0) * 100)) / 100)}<small> MXN</small></b></div>
