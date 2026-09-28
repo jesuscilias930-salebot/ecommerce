@@ -1,5 +1,6 @@
 import {storeRequestIdentity} from '@/lib/store-request-identity';
 import 'server-only';
+import {storeFetch} from './store-fetch';
 import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
 import { pricingKey } from './live-pricing';
@@ -39,7 +40,7 @@ export async function stockApi(path:string, body?:unknown) {
  if(!base) throw new Error('Conexión con inventario pendiente de configurar.');
  const allowed=['/public/store/cart-quote','/public/store/products/in-stock','/public/store/price-rules','/public/store/quote','/public/store/orders','/public/store/bundles','/public/store/checkout','/public/store/features'];
  if(!allowed.includes(path)) throw new Error('Ruta de tienda no permitida.');
- const response=await fetch(`${base.replace(/\/$/,'')}${path}`,{method:body?'POST':'GET',headers:{...await storeRequestIdentity(),'Content-Type':'application/json','X-Store-Tenant':tenant},body:body?JSON.stringify(body):undefined,cache:'no-store',signal:AbortSignal.timeout(15000)});
+ const response=await storeFetch(`${base.replace(/\/$/,'')}${path}`,path,{method:body?'POST':'GET',headers:{...await storeRequestIdentity(),'Content-Type':'application/json','X-Store-Tenant':tenant},body:body?JSON.stringify(body):undefined,cache:'no-store',signal:AbortSignal.timeout(15000)});
  if(!response.ok) throw new Error('No se pudo validar el precio. Revisa stock y reglas de precios en sock-control.');
  return response.json();
 }

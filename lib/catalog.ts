@@ -1,5 +1,6 @@
 import {storeRequestIdentity} from '@/lib/store-request-identity';
 import 'server-only';
+import {storeFetch} from './store-fetch';
 import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
 export type Package = { storeCategory?:string|null; description?:string|null; imageUrls?:string[]; imageUrl?:string|null; id: number; name: string; price: number; available: number; pieces: number; boxLengthCm?:number|null; boxWidthCm?:number|null; boxHeightCm?:number|null; boxWeightKg?:number|null; items: { size?:string|null; categoryId?:number|null; category?:string|null; assorted?:boolean; id?:number; productId?:number; name: string; quantity: number; assignedUnitPrice?:number|null }[]; tone: number };
@@ -29,7 +30,7 @@ export async function getCatalog(budget: Budget = 'all'): Promise<{packages: Pac
  try {
   const ids=(process.env.STOREFRONT_BUNDLE_IDS||'').split(',').map(Number).filter(n=>Number.isInteger(n)&&n>0);
   async function read<T>(path:string):Promise<T> {
-   const response=await fetch(`${base!.replace(/\/$/,'')}${path}`,{headers:{...await storeRequestIdentity(),'X-Store-Tenant':tenant},cache:'no-store',signal:AbortSignal.timeout(10000)});
+   const response=await storeFetch(`${base!.replace(/\/$/,'')}${path}`,path,{headers:{...await storeRequestIdentity(),'X-Store-Tenant':tenant},cache:'no-store',signal:AbortSignal.timeout(10000)});
    if(!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
    return response.json();
   }
