@@ -191,8 +191,8 @@ export function Card({ item }: { item: Package }) {
   return (
     <article className="product-card">
       <div className="product-visual">
-        <StorePhoto images={item.imageUrls} src={item.imageUrl} name={item.name}><BoxArt tone={item.tone} /></StorePhoto>
-        <span className="product-badge">{item.pieces} piezas</span>
+        <StorePhoto images={item.imageUrls} src={item.imageUrl} name={item.name} href={`/paquetes/${item.id}`}><BoxArt tone={item.tone} /></StorePhoto>
+        <span className="product-badge" style={{pointerEvents:"none"}}>{item.pieces} piezas</span>
         <Link href={`/paquetes/${item.id}`} aria-label={`Ver ${item.name}`} className="round-arrow">
           <ArrowUpRight size={21} />
         </Link>

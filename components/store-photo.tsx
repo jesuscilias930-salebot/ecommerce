@@ -1,14 +1,17 @@
 "use client";
 import { useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import styles from "./store-photo.module.css";
-export function StorePhoto({src,images,name,children,zoom=false}:{src?:string|null;images?:string[]|null;name:string;children:ReactNode;zoom?:boolean}) {
+export function StorePhoto({src,images,name,children,zoom=false,href}:{src?:string|null;images?:string[]|null;name:string;children:ReactNode;zoom?:boolean;href?:string}) {
   const photos=Array.from(new Set([src,...(images||[])].filter((url):url is string=>typeof url==='string'&&url.length>0)));
-  return <PhotoGallery key={photos.join('|')} photos={photos} name={name} zoom={zoom}>{children}</PhotoGallery>;
+  return <PhotoGallery key={photos.join('|')} photos={photos} name={name} zoom={zoom} href={href}>{children}</PhotoGallery>;
 }
-function PhotoGallery({photos,name,children,zoom}:{photos:string[];name:string;children:ReactNode;zoom:boolean}) {
+function PhotoGallery({photos,name,children,zoom,href}:{photos:string[];name:string;children:ReactNode;zoom:boolean;href?:string}) {
   const [index,setIndex]=useState(0);
   const [failed,setFailed]=useState<Set<string>>(()=>new Set());
   const track=useRef<HTMLDivElement>(null);
+  const pointerStart=useRef<{x:number;y:number}|null>(null);
+  const dragged=useRef(false);
   const multiple=photos.length>1;
   const move=(next:number)=>{
     const node=track.current;
@@ -29,7 +32,14 @@ function PhotoGallery({photos,name,children,zoom}:{photos:string[];name:string;c
         <div className={styles.surface}>
           {/* Native images support private S3 signed URLs without proxy caching. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} draggable={false} loading="lazy" onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
+          {href?<Link href={href} className={styles.detailLink} aria-label={`Ver detalle de ${name}`} draggable={false}
+            onPointerDown={event=>{pointerStart.current={x:event.clientX,y:event.clientY};dragged.current=false;}}
+            onPointerMove={event=>{const start=pointerStart.current;if(start&&Math.hypot(event.clientX-start.x,event.clientY-start.y)>8)dragged.current=true;}}
+            onPointerCancel={()=>{dragged.current=true;pointerStart.current=null;}}
+            onPointerUp={()=>{pointerStart.current=null;}}
+            onClick={event=>{if(dragged.current&&event.detail!==0)event.preventDefault();dragged.current=false;}}>
+            {url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} draggable={false} loading="lazy" onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
+          </Link>:url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} draggable={false} loading="lazy" onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
         </div>
       </div>)}
     </div>
