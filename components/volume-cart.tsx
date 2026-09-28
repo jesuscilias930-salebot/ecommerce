@@ -2,6 +2,7 @@
 import { Checkout } from "./checkout";
 import { CartShipping, type ShippingEstimate } from "./cart-shipping";
 import { CartQuantity } from "./cart-quantity";
+import { CartBundle } from "./cart-bundle";
 import { useContext, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -79,7 +80,9 @@ export function VolumeCart({
         {lines.length > 0 && !quote && <div className="order-notice" role="status">
           {quoteError ? <>{quoteError}<button onClick={retryQuote}>Reintentar</button></> : "Actualizando precios y existencias…"}
         </div>}
-        {!addressPage && quote && <CategorySavings quote={quote}/>}
+        {!addressPage && boxes.length > 0 && <div className="cart-section-heading"><h2>Tus paquetes</h2><p>Cada tarjeta es un paquete completo. Cambia la cantidad de cajas para ajustar todo su contenido.</p></div>}
+        {!addressPage && boxes.map(l => <CartBundle key={l.id} id={l.id} quantity={l.quantity} item={l.item} quote={l.q} onChange={quantity => change(l.id, quantity)}/>)}
+        {!addressPage && groups.length > 0 && <div className="cart-section-heading"><h2>Tus productos individuales</h2><p>Estos artículos se agregaron por separado y no forman parte de los paquetes de arriba.</p></div>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
           <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>
           {g.members.map(l => <div className="order-product" key={l.id}>
@@ -92,16 +95,7 @@ export function VolumeCart({
           </div>)}
           <div className="order-group-total"><span>Individuales de este grupo · {g.quantity} unidades</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
         </article>)}
-        {!addressPage && boxes.map(l => <article className="order-group" key={l.id}>
-          <div className="order-item-top">
-            <div className="order-thumb">{l.item?.imageUrl ? <img src={l.item.imageUrl} alt="" /> : <span aria-hidden="true">▣</span>}</div>
-            <div className="order-item-info"><span className="order-kind">Paquete para emprender</span><h3>{l.item?.name || "Caja no disponible"}</h3><p>{l.q ? money(l.q.unitPrice) : "Calculando…"} / caja</p></div>
-            <strong className="order-item-price">{l.q ? money(l.q.subtotal) : "—"}</strong>
-          </div>
-          {quantityControl(l.id, l.quantity, l.item?.available ?? 0)}
-          {l.item && l.quantity > l.item.available && <p role="alert">Solo hay {l.item.available} cajas disponibles. Ajusta la cantidad.</p>}
-          {l.item && <details className="order-contents"><summary>Ver qué incluye · {l.item.pieces * l.quantity} unidades en total</summary><ul>{l.item.items.map((item, index) => <li key={item.id ?? index}><span>{item.name}</span><b>{item.quantity * l.quantity} unidades</b></li>)}</ul><p>La tarifa considera cajas y pares sueltos del grupo. Deportivos y licra acumulan únicamente el mismo producto; no se mezclan. Contenido de {l.quantity} {l.quantity === 1 ? "caja" : "cajas"}. Cada unidad equivale a un par de calcetines o a un short. Todo está incluido en el precio del paquete.</p></details>}
-        </article>)}
+        {!addressPage && quote && <details className="cart-pricing-details"><summary>Cómo se calculan tus precios por volumen{quote.savings != null && quote.savings > 0 ? ` · Ahorras ${money(quote.savings)}` : ""}</summary><p>Solo es una explicación del precio. Tus artículos siguen siendo los paquetes y productos mostrados arriba.</p><CategorySavings quote={quote}/></details>}
         {showAddress && lines.length > 0 && <CartShipping key={shippingKey} cartKey={shippingKey} blocked={blockedReason} onSelect={estimate => setShipping({key: shippingKey, estimate})}/>}
       </section>
       {lines.length > 0 && <aside className="order-summary">
