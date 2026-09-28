@@ -5,6 +5,7 @@ import {COMMUNITY_URL,SUPPORT_URL,publishedReferences,type CustomerReference} fr
 import styles from './store-trust.module.css';
 import {StorePhoto} from './store-photo';
 import {BoxArt} from './box-art';
+import {getPresentationPhoto} from '@/lib/presentation-photo';
 
 export function ReferenceCard({reference:r}:{reference:CustomerReference}){return <figure className={styles.card}>
   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -18,11 +19,11 @@ export function TrustSection(){return <section className="section" aria-labelled
   <article className={styles.card}><span className={styles.icon}><MessageCircle aria-hidden="true"/></span><h3>Resuelve tus dudas</h3><p>Consulta los detalles antes de comprar. No necesitas entrar a un grupo ni crear una cuenta para preparar tu pedido.</p><ContactLink/></article>
 </div></section>;}
 export function CustomerReferences(){const references=publishedReferences();return <section className="section" id="referencias"><TestimonialPhotos limit={3}/><span className="eyebrow">EXPERIENCIAS DE COMPRA</span><h2>{references.length?'Clientes que ya recibieron su pedido.':'¿Quieres conocer referencias antes de comprar?'}</h2>{references.length?<><p className={styles.intro}>Testimonios y fotografías publicados con autorización de sus autores.</p><div className={styles.grid}>{references.slice(0,3).map(r=><ReferenceCard key={r.id} reference={r}/>)}</div></>:<p className={styles.intro}>Consulta cómo solicitar referencias y resolver tus dudas sobre los paquetes.</p>}<div className={styles.links}><Link href="/referencias">{references.length?'Ver todas las referencias':'Consultar referencias'} →</Link></div></section>;}
-export function CommunitySection({productPhoto}:{productPhoto?:{url:string;name:string}}){return <section className="section" id="comunidad" aria-labelledby="community-title">
+export async function CommunitySection({productPhoto}:{productPhoto?:{url:string;name:string}}){const presentationPhoto=await getPresentationPhoto();return <section className="section" id="comunidad" aria-labelledby="community-title">
  <div className={styles.community}>
   <figure className={styles.communityPhoto}>
-   <StorePhoto src={productPhoto?.url} name={productPhoto?`Nuestros productos: ${productPhoto.name}`:'Merlyn Mayoreo'}><BoxArt tone={1}/></StorePhoto>
-   <figcaption>{productPhoto?'Una muestra de nuestros productos':'Calcetines para emprender y resurtir'}</figcaption>
+   <StorePhoto src={presentationPhoto||productPhoto?.url} name={presentationPhoto?'Merlyn, detrás de tu pedido':productPhoto?`Nuestros productos: ${productPhoto.name}`:'Merlyn Mayoreo'}><BoxArt tone={1}/></StorePhoto>
+   <figcaption>{presentationPhoto?'Merlyn · Atención directa para tu compra':productPhoto?'Una muestra de nuestros productos':'Calcetines para emprender y resurtir'}</figcaption>
   </figure>
   <div className={styles.communityCopy}>
    <span className="eyebrow">DETRÁS DE TU PEDIDO</span>
