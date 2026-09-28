@@ -1,5 +1,5 @@
 "use client";
-import { LiveSummary } from "./live-summary";
+import "./volume-pricing.css";
 import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, individualVolume, shortProduct } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
@@ -144,7 +144,6 @@ export function Originals({
           </details>
         </div>
       </div>
-      <LiveSummary products={products} packages={packages} />
       <div className="original-results">
         <span>
           {filtered.length} productos <span>· Mayoreo a tu medida</span>
