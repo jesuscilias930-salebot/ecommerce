@@ -41,7 +41,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
         <dl className={styles.facts}><div><dt>Contenido por caja</dt><dd>{packageQuantityLabel(item)}</dd></div><div><dt>Promedio de referencia por unidad</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
         <AddButton key={item.id} item={item} chooseQuantity/>
-        <PurchaseConfidence bundleId={item.id}/>
+        <PurchaseConfidence/>
       </section>
     </div>
     {related.length>0&&<section className={styles.content} aria-labelledby="related-title"><h2 id="related-title">Otras opciones para tu negocio</h2><p>Paquetes disponibles con productos en común o una inversión cercana. Compara el contenido antes de elegir.</p><div className="product-grid">{related.map(candidate=><Card key={candidate.id} item={candidate}/>)}</div><Link className="text-link" href="/paquetes">Comparar todos los paquetes →</Link></section>}
