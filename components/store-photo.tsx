@@ -17,7 +17,7 @@ function PhotoGallery({photos,name,children,zoom,href}:{photos:string[];name:str
     const node=track.current;
     if(node)node.scrollTo({left:Math.max(0,Math.min(photos.length-1,next))*node.clientWidth,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
   };
-  return <div className={`${styles.frame}${zoom?` ${styles.zoomable}`:''}`} role="region" aria-label={`Fotografías de ${name}`} aria-roledescription="carrusel">
+  return <><div className={`${styles.frame}${zoom?` ${styles.zoomable}`:''}`} role="region" aria-label={`Fotografías de ${name}`} aria-roledescription="carrusel">
     <div ref={track} className={styles.track} tabIndex={multiple?0:undefined}
       aria-label={multiple?'Desliza o usa las flechas del teclado para ver las fotos':undefined}
       onKeyDown={event=>{if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();move(index+(event.key==='ArrowRight'?1:-1));}}}
@@ -48,6 +48,7 @@ function PhotoGallery({photos,name,children,zoom,href}:{photos:string[];name:str
       <button className={`${styles.arrow} ${styles.next}`} type="button" aria-label={`Foto siguiente de ${name}`} disabled={index===photos.length-1} onClick={()=>move(index+1)}>›</button>
       <span className={styles.counter} aria-live="polite" aria-atomic="true">{index+1} / {photos.length}</span>
     </>}
-    {zoom&&<span className={styles.hint} aria-hidden="true">⊕ Pasa el cursor para ampliar</span>}
-  </div>;
+  </div>
+    {zoom&&photos.length>0&&!failed.has(photos[index])&&<span className={styles.hint} aria-hidden="true">Pasa el cursor sobre la foto para ampliar</span>}
+  </>;
 }
