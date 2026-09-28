@@ -1,4 +1,5 @@
 import {PurchaseConfidence} from '@/components/store-trust';
+import {TestimonialPhotos} from '@/components/testimonial-photos';
 import {BundleDescription} from '@/components/bundle-description';
 import {BundleContent} from '@/components/bundle-content';
 import './breakdown.css';
@@ -27,11 +28,11 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
       <div className={styles.detailMain}>
         <StorePhoto zoom images={item.imageUrls} src={item.imageUrl} name={item.name}><BoxArt tone={item.tone} large/></StorePhoto>
         <nav className={styles.jumpLinks} aria-label="Información del paquete"><a href="#contenido-paquete">Qué incluye</a><a href="#dudas-paquete">Envío y compra</a><Link href="/referencias">Referencias de clientes</Link></nav>
-        <section id="contenido-paquete" className={styles.content} aria-labelledby="content-title"><h2 id="content-title">Todo lo que incluye tu caja</h2><BundleContent item={item} showHeading={false}/><p className="fine-print">Confirma tallas, colores y surtido antes de comprar. Las imágenes son de referencia.</p></section>
+        <section id="contenido-paquete" className={styles.content} aria-labelledby="content-title"><h2 id="content-title">Todo lo que incluye tu caja</h2><BundleContent item={item} showHeading={false}/><p className="fine-print">Consulta las tallas registradas en el desglose y las condiciones de surtido en la descripción. La fotografía no garantiza diseños o colores distintos de los expresamente ofrecidos.</p></section>
         <section id="dudas-paquete" className={styles.content} aria-labelledby="questions-title"><h2 id="questions-title">Resuelve tus dudas antes de comprar</h2>
           <details><summary>¿Cuánto pagaré de envío?</summary><p>El envío no está incluido en el precio de la caja. Al continuar al checkout, completa tu dirección para ver las opciones disponibles y elegir una antes del pago.</p></details>
           <details><summary>¿Necesito registrarme?</summary><p>No. Puedes preparar tu pedido como invitado. También puedes concluirlo por WhatsApp y recibir atención para coordinar tu compra.</p></details>
-          <details><summary>¿Puedo elegir las tallas y los diseños?</summary><p>El contenido corresponde al desglose de esta caja. Consulta con un asesor las tallas, colores y el surtido disponible antes de confirmar; una fotografía no garantiza un diseño específico.</p><Link href="/ayuda#contacto">Consultar con un asesor →</Link></details>
+          <details><summary>¿Puedo elegir las tallas y los diseños?</summary><p>Consulta las tallas registradas en el desglose y las condiciones de la descripción. Los artículos marcados como surtidos se preparan según existencias; no se garantiza un diseño o color específico salvo que se indique expresamente. Si necesitas una selección especial o falta un dato, consulta con un asesor.</p><Link href="/ayuda#contacto">Consultar con un asesor →</Link></details>
           <details><summary>¿Qué hago si hay un problema con mi pedido?</summary><p>Consulta las condiciones de cambios, cancelaciones y atención antes de comprar.</p><Link href="/envios-y-devoluciones">Ver políticas de envío y devoluciones →</Link></details>
         </section>
       </div>
@@ -42,6 +43,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
         <AddButton key={item.id} item={item} chooseQuantity/>
         <PurchaseConfidence/>
+        <TestimonialPhotos limit={2} compact/>
       </section>
     </div>
     {related.length>0&&<section className={styles.content} aria-labelledby="related-title"><h2 id="related-title">Otras opciones para tu negocio</h2><p>Paquetes disponibles con productos en común o una inversión cercana. Compara el contenido antes de elegir.</p><div className="product-grid">{related.map(candidate=><Card key={candidate.id} item={candidate}/>)}</div><Link className="text-link" href="/paquetes">Comparar todos los paquetes →</Link></section>}

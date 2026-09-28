@@ -21,6 +21,7 @@ import { money } from "@/lib/money";
 import { StorePhoto } from "./store-photo";
 import { groupByCategory } from "@/lib/product-categories";
 import categoryStyles from "./product-categories.module.css";
+import {PurchaseReferences} from './testimonial-gallery';
 
 function SockVisual({ product }: { product: Original }) {
   const id = useId().replaceAll(":", "");
@@ -95,10 +96,12 @@ export function Originals({
   products,
   packages = [],
   initialQuery = '',
+  references = [],
 }: {
   products: Original[];
   packages?: Package[];
   initialQuery?: string;
+  references?: {id:number;url:string}[];
 }) {
   const [query, setQuery] = useState(initialQuery);
   useEffect(()=>setQuery(initialQuery),[initialQuery]);
@@ -168,7 +171,7 @@ export function Originals({
             <span>El precio se actualiza al agregar o quitar pares.</span>
           </div>
         </aside>}
-        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages}/>)}</div>
+        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages} references={references}/>)}</div>
       </section>)}
       {!filtered.length && (
         <div className="empty">
@@ -183,10 +186,12 @@ function OriginalCard({
   product: p,
   products,
   packages = [],
+  references = [],
 }: {
   product: Original;
   products: Original[];
   packages?: Package[];
+  references?: {id:number;url:string}[];
 }) {
   const { lines, change } = useContext(Context);
   const quantity = lines.find((l) => l.id === -p.id)?.quantity || 0;
@@ -371,6 +376,7 @@ function OriginalCard({
             {p.currentStock ? "Agregar a mi carrito" : "Sin disponibilidad"}
             <ArrowUpRight size={17} />
           </button>
+          <PurchaseReferences photos={references}/>
           <p className="original-added" role="status">
             {quantity > 0 && (
               <>

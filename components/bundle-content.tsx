@@ -23,7 +23,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
           <tbody>
             {item.items.map((i, n) => (
               <tr key={i.id ?? n}>
-                <td>{i.name}</td>
+                <td>{i.name}{i.size?.trim()&&<small style={{display:'block'}}>Talla: {i.size}</small>}{i.assorted&&<small style={{display:'block'}}>Surtido de niño a adulto y todos los géneros, según existencias.</small>}</td>
                 <td>{i.quantity} {isShort(i)?'piezas':'pares'}{usesTripares(i)&&<small style={{display:'block'}}>{triparesLabel(i.quantity)}</small>}</td>
                 <td>
                   {i.assignedUnitPrice == null

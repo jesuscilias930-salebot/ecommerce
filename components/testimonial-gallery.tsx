@@ -2,13 +2,14 @@
 
 import {useRef,useState} from 'react';
 import styles from './testimonial-gallery.module.css';
+import Link from 'next/link';
 
-export function TestimonialGallery({photos}:{photos:{id:number;url:string}[]}) {
+export function TestimonialGallery({photos,compact=false}:{photos:{id:number;url:string}[];compact?:boolean}) {
  const dialog=useRef<HTMLDialogElement>(null);
  const [selected,setSelected]=useState<{id:number;url:string}|null>(null);
  function open(photo:{id:number;url:string}){setSelected(photo);dialog.current?.showModal();}
  return <>
-  <div className={styles.grid}>{photos.map((photo,index)=><figure key={photo.id} className={styles.card}>
+  <div className={`${styles.grid}${compact?` ${styles.compact}`:''}`}>{photos.map((photo,index)=><figure key={photo.id} className={styles.card}>
    <button type="button" className={styles.preview} onClick={()=>open(photo)} aria-label={`Ampliar referencia de compra ${index+1}`}>
     <img src={photo.url} alt={`Captura compartida por un cliente, referencia ${index+1}`} loading="lazy"/>
     <span className={styles.hint}>Ampliar captura ↗</span>
@@ -19,4 +20,8 @@ export function TestimonialGallery({photos}:{photos:{id:number;url:string}[]}) {
    <div className={styles.viewer}>{selected&&<img src={selected.url} alt="Captura completa de referencia de compra"/>}</div>
   </dialog>
  </>;
+}
+export function PurchaseReferences({photos}:{photos:{id:number;url:string}[]}){
+ if(!photos.length)return null;
+ return <aside className={styles.proof} aria-label="Referencias de clientes de la tienda"><h3>Experiencias de nuestros clientes</h3><p>Referencias de compras en Merlyn; no necesariamente de este producto. Toca una foto para leerla completa.</p><TestimonialGallery photos={photos.slice(0,2)} compact/><Link href="/referencias">Ver todas las referencias →</Link></aside>;
 }
