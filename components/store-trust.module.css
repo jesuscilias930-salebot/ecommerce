@@ -3,7 +3,8 @@
 .card{margin:0;background:#fff;border:1px solid #dedfd6;border-radius:20px;padding:24px;min-width:0;}
 .card h3{font-size:20px;margin:14px 0 8px;}.card p{line-height:1.65;color:#6c7770;overflow-wrap:anywhere;}
 .icon{display:inline-flex;padding:12px;border-radius:14px;background:#e9eddd;color:#183c32;}
-.community{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:36px;padding:clamp(24px,5vw,56px);background:#183c32;border-radius:24px;color:#faf9f6;align-items:center;}
+.community{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:36px;padding:clamp(24px,5vw,56px);background:#183c32;border-radius:24px;color:#faf9f6;align-items:center;}
+.communityPhoto{margin:0;min-width:0;}.communityPhoto figcaption{margin-top:10px;font-size:12px;color:#e9eddd;line-height:1.5;}.communityCopy{min-width:0;}.communityActions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;}.communityActions a{min-height:44px;max-width:100%;box-sizing:border-box;}.communityActions .communitySecondary{background:transparent;border:1px solid #b3c7bb;color:#faf9f6;font-weight:500;}.communityActions a:hover{background:#e7efbf;}.communityActions .communitySecondary:hover{background:#ffffff12;}
 .community h2{font-size:clamp(28px,4vw,44px);margin:12px 0;}.community p{line-height:1.7;color:#e9eddd;}
 .community a{display:inline-flex;align-items:center;gap:10px;justify-content:center;background:#dce8a0;color:#183c32;border-radius:12px;padding:15px 20px;text-decoration:none;font-weight:700;}
 .community small{display:block;line-height:1.6;margin-top:14px;color:#e9eddd;}
