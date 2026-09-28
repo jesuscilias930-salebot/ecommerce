@@ -81,7 +81,7 @@ export function VolumeCart({
           {quoteError ? <>{quoteError}<button onClick={retryQuote}>Reintentar</button></> : "Actualizando precios y existencias…"}
         </div>}
         {!addressPage && boxes.length > 0 && <div className="cart-section-heading"><h2>Tus paquetes</h2><p>Cada tarjeta es un paquete completo. Cambia la cantidad de cajas para ajustar todo su contenido.</p></div>}
-        {!addressPage && boxes.map(l => <CartBundle key={l.id} id={l.id} quantity={l.quantity} item={l.item} quote={l.q} onChange={quantity => change(l.id, quantity)}/>)}
+        {!addressPage && boxes.map(l => <CartBundle key={l.id} id={l.id} quantity={l.quantity} item={l.item} quote={l.q} products={products} onChange={quantity => change(l.id, quantity)}/>)}
         {!addressPage && groups.length > 0 && <div className="cart-section-heading"><h2>Tus productos individuales</h2><p>Estos artículos se agregaron por separado y no forman parte de los paquetes de arriba.</p></div>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
           <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>
