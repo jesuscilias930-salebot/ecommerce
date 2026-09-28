@@ -1,6 +1,6 @@
 "use client";
 import "./volume-pricing.css";
-import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, individualVolume, shortProduct } from "@/lib/live-pricing";
+import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, shortProduct, volumePricingMessage } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
 import { useContext, useState, useId, useEffect } from "react";
@@ -305,14 +305,7 @@ function OriginalCard({
           </table>
         </div>
         <p className="original-volume">
-          {pricingKey(p)==="shorts:caballero" ? "Los shorts de caballero con y sin cierre suman para tu tarifa. Dama se calcula por separado." : hasCategoryVolume(p) || (!shortProduct(p) && !individualVolume(p) && p.categoryId===undefined && p.pricingGroup) ? (
-            <>
-              Combina variantes de <b>{pricingName(p)}</b> para alcanzar el
-              siguiente precio.
-            </>
-          ) : (
-            "El descuento se calcula con las piezas de este producto."
-          )}
+          {volumePricingMessage(p)}
         </p>
         <div className="original-purchase">
           <div className="original-quantity-row">

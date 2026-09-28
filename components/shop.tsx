@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { packageQuantityLabel } from "@/lib/sale-presentation";
+import { bundleVolumeMessages } from "@/lib/live-pricing";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback } from "react";
 import {useCartQuote} from './use-cart-quote';
 import type {CartQuote} from '@/lib/cart-quote';
@@ -215,7 +216,7 @@ export function Card({ item }: { item: Package }) {
         <small>
           IVA incluido · Envío aparte{item.pieces>0?` · Promedio ${money(item.price/item.pieces)} por unidad`:''}.
         </small>
-        <details className="card-pricing-help"><summary>Precio por volumen</summary><p>El carrito ajusta la tarifa con todo tu pedido. Deportivos y licra suman solo por producto; las categorías combinables suman entre géneros. Shorts caballero combinan entre sí; dama por separado.</p></details>
+        <details className="card-pricing-help"><summary>Precio por volumen</summary>{bundleVolumeMessages(item).map(message=><p key={message}>{message}</p>)}</details>
         <AddButton item={item} />
       </div>
     </article>

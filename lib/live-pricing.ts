@@ -8,6 +8,18 @@ export const hasCategoryVolume=(p:Original)=>!shortProduct(p)&&!individualVolume
 // Explicit null means no category: never combine unrelated uncategorized products.
 export const pricingKey=(p:Original)=>maleShort(p)?'shorts:caballero':shortProduct(p)||individualVolume(p)?`product:${p.id}`:hasCategoryVolume(p)?`category:${p.categoryId}`:p.categoryId===undefined&&p.pricingGroup?.trim()?`group:${p.pricingGroup.trim().toLowerCase()}`:`product:${p.id}`;
 export const pricingName=(p:Original)=>maleShort(p)?'Shorts caballero':shortProduct(p)||individualVolume(p)?p.name:hasCategoryVolume(p)?p.category||'Categoría':p.categoryId===undefined&&p.pricingGroup?.trim()||p.name;
+export function volumePricingMessage(p:Original):string {
+ const key=pricingKey(p);
+ if(key==='shorts:caballero')return 'Suma shorts de caballero con y sin cierre, en paquetes o por separado. La cantidad total determina el precio de mayoreo de cada modelo.';
+ if(key.startsWith('category:')||key.startsWith('group:'))return `Todos los pares de la categoría ${pricingName(p).toLocaleLowerCase('es-MX')} se suman en tu carrito, sin importar el género. Incluimos los de tus paquetes y los individuales para aplicar a cada modelo el precio de mayoreo que corresponde al total.`;
+ return `${shortProduct(p)?'Las piezas':'Los pares'} de ${p.name.toLocaleLowerCase('es-MX')} se suman en tu carrito, en paquetes o por separado. El precio de mayoreo se calcula con la cantidad total de este producto.`;
+}
+export function bundleVolumeMessages(item:Package):string[] {
+ return [...new Set(item.items.map((part,index)=>volumePricingMessage({
+  id:part.productId??-(index+1),name:part.name,category:part.category,categoryId:part.categoryId,
+  gender:/\b(caballero|hombre)\b/i.test(part.name)?'Hombre':undefined,currentStock:0,rules:[],
+ })))];
+}
 export function calculateGroups(products:Original[],lines:{id:number;quantity:number}[],packages:Package[]=[]) {
  const boxed=lines.filter(l=>l.id>0).flatMap(l=>(packages.find(p=>p.id===l.id)?.items||[]).map(i=>({id:-(i.productId||0),assorted:!!i.assorted,quantity:i.quantity*l.quantity,product:products.find(p=>p.id===i.productId)||(i.assorted&&i.categoryId!=null?products.find(p=>p.categoryId===i.categoryId):undefined)})));
  const productDemand=(id:number)=>lines.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0)+boxed.filter(l=>l.id===id&&!l.assorted).reduce((n,l)=>n+l.quantity,0);

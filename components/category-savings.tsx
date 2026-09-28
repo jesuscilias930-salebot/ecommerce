@@ -4,7 +4,7 @@ import styles from './category-savings.module.css';
 export function CategorySavings({quote}:{quote:CartQuote}){
  return <section className={styles.panel} aria-label="Precio por categoría">
   <h2>Tus cajas y productos sueltos suman</h2>
-  <p>Caricatura y las demás categorías combinables suman entre géneros. En deportivos y licra solo suman los pares del mismo producto, incluidos los de tus cajas: tin deportivo, calceta deportiva y tin de licra no se mezclan. Shorts caballero con y sin cierre suman entre sí; dama es independiente. Una unidad equivale a un par de calcetines o un short.</p>
+  <p>Así se suman los productos de tu pedido para calcular el precio de mayoreo de cada grupo.</p>
   {quote.savings!=null&&quote.savings>0&&<div className={styles.saving} role="status"><strong>Ahorras {money(quote.savings)} al combinar tu pedido</strong><small>Comparado con comprar cada caja por separado y cada modelo individual por separado, con las tarifas actuales. Envío no incluido.</small></div>}
   {quote.groups.map(g=><article key={g.key} className={styles.group}>
    <header><h3>{g.name}</h3><strong>{money(g.subtotal)}</strong></header>

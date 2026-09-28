@@ -1,5 +1,6 @@
 import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
+import {bundleVolumeMessages} from '@/lib/live-pricing';
 import {packageQuantityLabel,isShort,usesTripares,triparesLabel} from '@/lib/sale-presentation';
 
 export function BundleContent({ item, showHeading = true }: { item: Package; showHeading?: boolean }) {
@@ -43,9 +44,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
         <span>Referencia por una caja</span>
         <strong>{money(item.price)} MXN</strong>
       </div>
-      <small>
-        El precio final suma cajas e individuales por categoría combinable. En deportivos y licra, el volumen se calcula por producto. Shorts caballero con y sin cierre combinan entre sí; dama por separado. Consulta el total actualizado al elegir la cantidad.
-      </small>
+      <div>{bundleVolumeMessages(item).map(message=><p key={message}><small>{message}</small></p>)}</div>
       <div className="bundle-measures">
         <span>
           Dimensiones
