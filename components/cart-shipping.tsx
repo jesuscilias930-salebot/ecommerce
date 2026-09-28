@@ -5,6 +5,7 @@ import {money} from '@/lib/money';
 import {ShippingAddressForm} from './shipping-address-form';
 import styles from './cart-shipping.module.css';
 import {useRouter} from 'next/navigation';
+import {isAllowedShippingRate} from '@/lib/shipping-carriers';
 
 type Rate={carrier:string;service:string;description:string;deliveryEstimate:string;totalPrice:number;currency:string;token:string};
 type Quote={environment:'sandbox'|'production';rates:Rate[];expiresAt:string;parcel:{pairs:number;weightKg:number;lengthCm:number;widthCm:number;heightCm:number}};
@@ -25,13 +26,13 @@ export function CartShipping({cartKey,blocked,onSelect}:{cartKey:string;blocked?
    const raw=sessionStorage.getItem(draftKey);const saved=raw?JSON.parse(raw):null;
    if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
     const draft={...emptyAddress};
-    for(const key of Object.keys(draft) as (keyof ShippingAddress)[])if(typeof saved[key]==='string')draft[key]=saved[key].slice(0,addressLimits[key]);
+    for(const key of Object.keys(draft) as (keyof ShippingAddress)[])if(typeof saved[key]==='string')draft[key]=saved[key].slice(0,key==='phone'?24:addressLimits[key]);
     draft.country='MX';setAddress(draft);
    }
   }catch{/* Invalid stored data must not prevent showing the form. */}
   try{
    const saved=JSON.parse(sessionStorage.getItem(selectionKey)||'null');
-   if(saved?.cartKey===cartKey&&Date.parse(saved.quote?.expiresAt)>Date.now()&&saved.quote?.rates?.[saved.selected]?.token){
+   if(saved?.cartKey===cartKey&&Date.parse(saved.quote?.expiresAt)>Date.now()&&saved.quote?.rates?.[saved.selected]?.token&&saved.quote.rates.every(isAllowedShippingRate)){
     const destination=validateAddress(saved.address),rate=saved.quote.rates[saved.selected];
     setAddress(destination);setQuote(saved.quote);setSelected(saved.selected);setOpen(false);
     callback.current({price:Number(rate.totalPrice),test:saved.quote.environment==='sandbox',expiresAt:saved.quote.expiresAt,token:rate.token,address:destination,carrier:rate.carrier,service:rate.service});
@@ -56,9 +57,10 @@ export function CartShipping({cartKey,blocked,onSelect}:{cartKey:string;blocked?
    const response=await fetch('/api/shipping-quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...JSON.parse(cartKey),destination}),signal:controller.signal});
    const data=await response.json();
    if(!response.ok)throw Error(data.error||'No pudimos cotizar el envío.');
+   if(Array.isArray(data.rates)){data.rates=data.rates.filter(isAllowedShippingRate);if(!data.rates.length)throw Error('No hay paqueterías disponibles para esta dirección. Contacta a un asesor.');}
    if(!['sandbox','production'].includes(data.environment)||!Array.isArray(data.rates)||!data.rates.length||!Number.isFinite(Date.parse(data.expiresAt))||Date.parse(data.expiresAt)<=Date.now()||data.rates.some((r:Rate)=>typeof r.token!=='string'||!r.token||r.currency!=='MXN'||!Number.isFinite(Number(r.totalPrice))||Number(r.totalPrice)<=0))throw Error('No recibimos tarifas válidas. Intenta nuevamente.');
    if(controller.signal.aborted)return;
-   setQuote(data);setOpen(false);
+   setAddress(destination);setQuote(data);setOpen(false);
   }catch(e){if(e instanceof Error&&e.name!=='AbortError'){setError(e.message);setOpen(true);}}finally{setBusy(false);}
  }
  function choose(index:number){if(!quote||Date.parse(quote.expiresAt)<=Date.now())return;const rate=quote.rates[index];if(!rate.token)return;setSelected(index);onSelect({price:Number(rate.totalPrice),test:quote.environment==='sandbox',expiresAt:quote.expiresAt,token:rate.token,address,carrier:rate.carrier,service:rate.service});try{sessionStorage.setItem(selectionKey,JSON.stringify({cartKey,quote,selected:index,address}));}catch{}}

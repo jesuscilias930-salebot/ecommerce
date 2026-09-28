@@ -1,5 +1,6 @@
 import {storeRequestIdentity} from '@/lib/store-request-identity';
 import { validateAddress } from '@/lib/shipping-address';
+import {isAllowedShippingRate} from '@/lib/shipping-carriers';
 import { getStoreTenant } from '@/lib/store-tenant';
 import { isAllowedStoreOrigin } from '@/lib/store-origin.mjs';
 
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     const response=await fetch(`${base.replace(/\/$/,'')}/public/store/shipping-quote`,{method:'POST',headers:{...await storeRequestIdentity(),'Content-Type':'application/json','X-Store-Tenant':await getStoreTenant()},body:JSON.stringify(payload),cache:'no-store',signal:AbortSignal.timeout(45000)});
     const data=await response.json().catch(()=>null);
     if(!response.ok)return Response.json({error:response.status===400&&typeof data?.message==='string'?data.message:'No pudimos consultar el envío. Intenta nuevamente en un momento.'},{status:response.status===429?429:400,headers});
+    if(data&&Array.isArray(data.rates))data.rates=data.rates.filter(isAllowedShippingRate);
     return Response.json(data,{headers});
   } catch(error) {
     return Response.json({error:error instanceof Error && !['TypeError','SyntaxError','TimeoutError','AbortError'].includes(error.name)?error.message:'No pudimos cotizar el envío. Revisa tu conexión e intenta nuevamente.'},{status:400,headers});

@@ -3,17 +3,27 @@ import assert from 'node:assert/strict';
 import {normalizePhone,validateAddress,emptyAddress} from '../lib/shipping-address.ts';
 import {packageQuantityLabel} from '../lib/sale-presentation.ts';
 import {packageCategories} from '../lib/package-categories.ts';
+import {isAllowedShippingRate} from '../lib/shipping-carriers.ts';
 
 test('Mexican phones are normalized without duplicating country prefix',()=>{
- assert.equal(normalizePhone('272 123 4567'),'522721234567');
+ assert.equal(normalizePhone('272 123 4567'),'2721234567');
  assert.equal(normalizePhone('+52 (272) 123-4567'),'522721234567');
  assert.equal(normalizePhone('522721234567'),'522721234567');
  assert.equal(normalizePhone('+1 202 555 0123'),'12025550123');
 });
 test('checkout submits normalized phones and rejects non-phone text',()=>{
  const address={...emptyAddress,recipient:'Prueba',phone:'272 123 4567',email:'test@example.com',postalCode:'94300',state:'VER',city:'Orizaba',district:'Centro',street:'Prueba',exteriorNumber:'1'};
- assert.equal(validateAddress(address).phone,'522721234567');
+ assert.equal(validateAddress(address).phone,'2721234567');
  assert.throws(()=>validateAddress({...address,phone:'abcdefg'}));
+ for(const phone of ['2721234567','+52 (272) 123-4567','12025550123'])assert.ok(validateAddress({...address,phone}).phone);
+ for(const phone of ['123','1234567890123456','2721234567abc','++522721234567'])assert.throws(()=>validateAddress({...address,phone}));
+ for(const exteriorNumber of ['', '   ', undefined, null])assert.equal(validateAddress({...address,exteriorNumber}).exteriorNumber,'SN');
+ assert.equal(validateAddress({...address,exteriorNumber:'12 B'}).exteriorNumber,'12 B');
+});
+test('excluded carrier is matched by name rather than delivery time',()=>{
+ for(const carrier of ['90 min','90minutos','90-Min','90 MINUTES'])assert.equal(isAllowedShippingRate({carrier}),false);
+ for(const carrier of ['DHL','FedEx','99minutos'])assert.equal(isAllowedShippingRate({carrier}),true);
+ assert.equal(isAllowedShippingRate({carrier:'DHL',deliveryEstimate:'90 minutos'}),true);
 });
 test('package labels distinguish sports sets, other socks and mixed apparel',()=>{
  assert.equal(packageQuantityLabel({pieces:150,items:[{name:'Tin deportivo',quantity:150}]}),'150 pares · 50 tripares');

@@ -9,7 +9,7 @@ const fields:{key:keyof ShippingAddress;label:string;auto?:string;type?:string;o
  {key:'phone',label:'Teléfono de contacto',auto:'shipping tel',type:'tel'},
  {key:'email',label:'Correo de contacto',auto:'shipping email',type:'email'},
  {key:'street',label:'Calle',auto:'shipping address-line1'},
- {key:'exteriorNumber',label:'Número exterior (o S/N)'},
+ {key:'exteriorNumber',label:'Número exterior',optional:true},
  {key:'interiorNumber',label:'Número interior',optional:true},
  {key:'references',label:'Referencias para encontrar el domicilio',optional:true}
 ];
@@ -17,7 +17,8 @@ export function ShippingAddressForm({value,onChange,onContinue,onBack,busy,block
  const [locationValid,setLocationValid]=useState(false);
  const renderField=(f:typeof fields[number])=><label key={f.key} htmlFor={'shipping-'+f.key} className={['email','street','references'].includes(f.key)?styles.wide:undefined}>{f.label}{f.optional?<span className={styles.optional}>Opcional</span>:<span aria-hidden="true"> *</span>}
    <input id={'shipping-'+f.key} name={f.key} value={value[f.key]} type={f.type||'text'} autoComplete={f.auto||'off'} required={!f.optional} maxLength={f.key==='phone'?24:addressLimits[f.key]} disabled={busy} inputMode={f.key==='phone'?'tel':undefined} placeholder={f.key==='phone'?'272 123 4567':undefined} aria-describedby={f.key==='phone'?'shipping-phone-hint':undefined} onChange={e=>onChange({...value,[f.key]:e.target.value})}/>
-   {f.key==='phone'&&<small id="shipping-phone-hint">México: escribe tus 10 dígitos; agregamos +52 automáticamente. Para otro país, incluye su código.</small>}
+   {f.key==='phone'&&<small id="shipping-phone-hint">Puedes escribirlo con o sin código de país. Ejemplo: 272 123 4567 o +52 272 123 4567.</small>}
+   {f.key==='exteriorNumber'&&<small>Si lo dejas vacío, guardaremos SN (sin número).</small>}
   </label>;
  return <form className={styles.form} onSubmit={e=>{e.preventDefault();if(locationValid&&!busy&&!blocked)onContinue();}}>
   <p className={styles.intro}>Sin crear una cuenta. Los campos con * son obligatorios.</p>
