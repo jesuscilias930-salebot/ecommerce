@@ -196,7 +196,6 @@ export function Card({ item }: { item: Package }) {
     <article className="product-card">
       <div className="product-visual">
         <StorePhoto images={item.imageUrls} src={item.imageUrl} name={item.name} href={`/paquetes/${item.id}`}><BoxArt tone={item.tone} /></StorePhoto>
-        <span className="product-badge" style={{pointerEvents:"none"}}>{packageQuantityLabel(item)}</span>
         <Link href={`/paquetes/${item.id}`} aria-label={`Ver ${item.name}`} className="round-arrow">
           <ArrowUpRight size={21} />
         </Link>
