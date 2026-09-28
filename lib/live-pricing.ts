@@ -15,10 +15,25 @@ export function volumePricingMessage(p:Original):string {
  return `${shortProduct(p)?'Las piezas':'Los pares'} de ${p.name.toLocaleLowerCase('es-MX')} se suman en tu carrito, en paquetes o por separado. El precio de mayoreo se calcula con la cantidad total de este producto.`;
 }
 export function bundleVolumeMessages(item:Package):string[] {
- return [...new Set(item.items.map((part,index)=>volumePricingMessage({
+ const groups=new Map<string,Original[]>();
+ item.items.forEach((part,index)=>{
+ const product:Original={
   id:part.productId??-(index+1),name:part.name,category:part.category,categoryId:part.categoryId,
   gender:/\b(caballero|hombre)\b/i.test(part.name)?'Hombre':undefined,currentStock:0,rules:[],
- })))];
+ };
+ const key=pricingKey(product);
+ // Group explanatory copy only: each product keeps its own pricing calculation.
+ const messageKey=key.startsWith('product:')?(shortProduct(product)?'individual:pieces':'individual:pairs'):key;
+ groups.set(messageKey,[...(groups.get(messageKey)||[]),product]);
+ });
+ const messages=[...groups].map(([key,products])=>{
+  if(key.startsWith('individual:')&&new Set(products.map(pricingKey)).size>1){
+   const names=[...new Set(products.map(product=>product.name.trim().replace(/\s+/g,' ').toLocaleLowerCase('es-MX')))];
+   return `Para ${names.join(', ')}, sumamos ${key==='individual:pieces'?'las piezas':'los pares'} del mismo producto en tu carrito, incluidos paquetes e individuales. Cada producto se calcula por separado para aplicar su precio de mayoreo.`;
+  }
+  return volumePricingMessage(products[0]);
+ });
+ return [...new Map(messages.map(message=>[message.normalize('NFC').replace(/\s+/g,' ').trim().toLocaleLowerCase('es-MX'),message])).values()];
 }
 export function calculateGroups(products:Original[],lines:{id:number;quantity:number}[],packages:Package[]=[]) {
  const boxed=lines.filter(l=>l.id>0).flatMap(l=>(packages.find(p=>p.id===l.id)?.items||[]).map(i=>({id:-(i.productId||0),assorted:!!i.assorted,quantity:i.quantity*l.quantity,product:products.find(p=>p.id===i.productId)||(i.assorted&&i.categoryId!=null?products.find(p=>p.categoryId===i.categoryId):undefined)})));

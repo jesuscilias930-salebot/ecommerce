@@ -30,3 +30,22 @@ test('bundle messages deduplicate categories and use only included products',()=
  assert.match(mixed[1],/tin deportivo/);
  assert.doesNotMatch(mixed.join(' '),/shorts|licra/i);
 });
+test('several sports products share one explanation without combining their prices',()=>{
+ const items=[{productId:1,name:'Tin deportivo',category:'DEPORTIVAS'},{productId:2,name:'Calceta deportiva unisex',category:'DEPORTIVAS'},{productId:3,name:'Tin de licra',category:'LICRA'}];
+ const messages=bundleVolumeMessages({items});
+ assert.equal(messages.length,1);
+ assert.match(messages[0],/Cada producto se calcula por separado/);
+ assert.match(messages[0],/mismo producto/);
+});
+test('repeated rows for the same product display its explanation only once',()=>{
+ const item={productId:1,name:'Calceta deportiva unisex',category:'DEPORTIVAS'};
+ const messages=bundleVolumeMessages({items:[item,{...item,name:'CALCETA  DEPORTIVA UNISEX'}]});
+ assert.equal(messages.length,1);
+ assert.match(messages[0],/calceta deportiva unisex/);
+});
+test('mixed bundles keep category and individual rules distinct',()=>{
+ const messages=bundleVolumeMessages({items:[{productId:1,name:'Tin deportivo',category:'DEPORTIVAS'},{productId:2,name:'Calceta deportiva',category:'DEPORTIVAS'},{productId:3,name:'Calceta caricatura',category:'CARICATURA',categoryId:7}]});
+ assert.equal(messages.length,2);
+ assert.match(messages[0],/por separado/);
+ assert.match(messages[1],/categoría caricatura/);
+});
