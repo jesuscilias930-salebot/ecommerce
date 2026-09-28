@@ -15,3 +15,8 @@ export function bundlePresentation(parts: {quantity: number; tripares: boolean}[
   const loose = parts.reduce((sum, part) => sum + part.quantity % 3, 0);
   return [sets ? `${sets} ${sets === 1 ? 'tripar' : 'tripares'}` : '', loose ? `${loose} ${loose === 1 ? 'par suelto' : 'pares sueltos'}` : ''].filter(Boolean).join(' + ') || null;
 }
+export function packageQuantityLabel(item: {pieces: number; items: (Item & {quantity:number})[]}): string {
+  const allSocks=item.items.length>0&&item.items.every(part=>!isShort(part));
+  const sets=bundlePresentation(item.items.map(part=>({quantity:part.quantity,tripares:usesTripares(part)})));
+  return `${item.pieces} ${allSocks?'pares':'unidades'}${sets?` · ${sets}`:''}`;
+}

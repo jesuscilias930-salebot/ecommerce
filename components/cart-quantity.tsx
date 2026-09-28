@@ -3,12 +3,13 @@ import { useId, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import styles from "./cart-quantity.module.css";
 
-export function CartQuantity({name,quantity,max,unit,onChange}:{name:string;quantity:number;max:number;unit:"pares"|"cajas"|"unidades";onChange:(quantity:number)=>void}) {
+export function CartQuantity({name,quantity,max,unit,onChange}:{name:string;quantity:number;max:number|null;unit:"pares"|"cajas"|"unidades";onChange:(quantity:number)=>void}) {
   const id=useId();
   const [draft,setDraft]=useState<string|null>(null);
   const [error,setError]=useState("");
   const [confirm,setConfirm]=useState(false);
-  const limit=Math.max(0,Math.min(100000,Math.floor(max)));
+  const unknown=max===null;
+  const limit=unknown?quantity:Math.max(0,Math.min(100000,Math.floor(max)));
   function commit(){
     if(draft===null)return;
     const next=Number(draft);
@@ -35,7 +36,7 @@ export function CartQuantity({name,quantity,max,unit,onChange}:{name:string;quan
       </div>
       <button type="button" className={styles.remove} onClick={()=>setConfirm(true)}><Trash2 size={15}/> Eliminar artículo</button>
     </div>
-    <p id={`${id}-hint`} className={styles.hint}>{limit===0?"Sin disponibilidad. Puedes eliminar este artículo.":quantity>limit?`Solo hay ${limit} ${unit}. Ajusta la cantidad.`:quantity===limit?`Agregaste todos los ${unit} disponibles.`:''}</p>
+    <p id={`${id}-hint`} className={styles.hint}>{unknown?"Existencias pendientes de verificar. Reintenta la carga para aumentar la cantidad.":limit===0?"Sin disponibilidad. Puedes eliminar este artículo.":quantity>limit?`Solo hay ${limit} ${unit}. Ajusta la cantidad.`:quantity===limit?`Agregaste todos los ${unit} disponibles.`:''}</p>
     {error&&<p role="alert" className={styles.error}>{error}</p>}
     {confirm&&<div className={styles.confirm} role="group" aria-label={`Confirmar eliminación de ${name}`}><p>¿Eliminar todos los {quantity} {unit} de <b>{name}</b> del carrito?</p><button type="button" onClick={()=>onChange(0)}>Sí, eliminar artículo</button><button type="button" onClick={()=>setConfirm(false)}>Conservar</button></div>}
   </div>;

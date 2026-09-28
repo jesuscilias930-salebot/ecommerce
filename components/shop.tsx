@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { packageQuantityLabel } from "@/lib/sale-presentation";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback } from "react";
 import {useCartQuote} from './use-cart-quote';
 import type {CartQuote} from '@/lib/cart-quote';
@@ -21,7 +22,6 @@ import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
 import { BoxArt } from "./box-art";
 import { StorePhoto } from "./store-photo";
-import { BundleDescription } from "./bundle-description";
 import { matchesSearch } from '@/lib/shopping-discovery';
 import discovery from './shopping-discovery.module.css';
 import "./purchase-actions.css";
@@ -99,9 +99,12 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   );
 }
 export function Header() {
+  const pathname=usePathname();
+  const compact=pathname==='/carrito'||pathname==='/checkout';
   const { lines } = useContext(Context);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchType, setSearchType] = useState('/paquetes');
+  if(compact)return <header className="site-header checkout-header"><Link className="brand" href="/">merlyn<span>mayoreo</span></Link><Link href={pathname==='/checkout'?'/carrito':'/paquetes'}>{pathname==='/checkout'?'← Volver al carrito':'← Seguir comprando'}</Link><Link href="/ayuda">Ayuda</Link></header>;
   return (
     <>
       <div className="announcement">
@@ -192,7 +195,7 @@ export function Card({ item }: { item: Package }) {
     <article className="product-card">
       <div className="product-visual">
         <StorePhoto images={item.imageUrls} src={item.imageUrl} name={item.name} href={`/paquetes/${item.id}`}><BoxArt tone={item.tone} /></StorePhoto>
-        <span className="product-badge" style={{pointerEvents:"none"}}>{item.pieces} piezas</span>
+        <span className="product-badge" style={{pointerEvents:"none"}}>{packageQuantityLabel(item)}</span>
         <Link href={`/paquetes/${item.id}`} aria-label={`Ver ${item.name}`} className="round-arrow">
           <ArrowUpRight size={21} />
         </Link>
@@ -202,8 +205,7 @@ export function Card({ item }: { item: Package }) {
         <Link href={`/paquetes/${item.id}`}>
           <h3>{item.name}</h3>
         </Link>
-        <BundleDescription text={item.description}/>
-        {!item.description?.trim()&&<p>{item.items.map((i) => i.name).join(" · ")}</p>}
+        <p className="card-content-preview">{item.items.length} tipos de producto · Ver contenido y surtido en el detalle.</p>
         <div className="price-row">
           <b>
             {money(item.price)} <small>MXN</small>
@@ -211,8 +213,9 @@ export function Card({ item }: { item: Package }) {
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
         <small>
-          Referencia por 1 caja · IVA incluido · Envío aparte. Cajas y pares sueltos suman por categoría combinable; deportivos y licra suman solo por producto. Shorts caballero combinan entre sí; dama por separado.
+          IVA incluido · Envío aparte{item.pieces>0?` · Promedio ${money(item.price/item.pieces)} por unidad`:''}.
         </small>
+        <details className="card-pricing-help"><summary>Precio por volumen</summary><p>El carrito ajusta la tarifa con todo tu pedido. Deportivos y licra suman solo por producto; las categorías combinables suman entre géneros. Shorts caballero combinan entre sí; dama por separado.</p></details>
         <AddButton item={item} />
       </div>
     </article>

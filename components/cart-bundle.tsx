@@ -6,15 +6,16 @@ import { CartQuantity } from "./cart-quantity";
 import { bundlePresentation, isShort, triparesLabel, usesTripares } from "@/lib/sale-presentation";
 import type { Original } from "@/lib/product-catalog";
 
-export function CartBundle({ id, quantity, item, quote, products = [], onChange }: {
+export function CartBundle({ id, quantity, item, quote, products = [], availabilityUnknown = false, onChange }: {
   id: number;
   quantity: number;
   item?: Package;
   quote?: CartQuoteLine;
   products?: Original[];
+  availabilityUnknown?: boolean;
   onChange: (quantity: number) => void;
 }) {
-  const name = quote?.name || item?.name || "Paquete no disponible";
+  const name = quote?.name || item?.name || (availabilityUnknown ? `Paquete #${id} · pendiente de verificar` : "Paquete no disponible");
   const contents = quote?.components.length
     ? quote.components.map((part, index) => ({
         key: `${part.productId}-${index}`, name: part.name,
@@ -52,7 +53,7 @@ export function CartBundle({ id, quantity, item, quote, products = [], onChange 
       <small>Una unidad equivale a un par de calcetines o a un short. Todo el contenido está incluido en el total de arriba.</small>
       {hasTripares && <p className="cart-tripar-help">1 tripar = 3 pares de calcetines. Es la presentación de los pares indicados, no una cantidad adicional.</p>}
     </div>
-    <CartQuantity name={name} quantity={quantity} max={item?.available ?? 0} unit="cajas" onChange={onChange}/>
+    <CartQuantity name={name} quantity={quantity} max={availabilityUnknown?null:item?.available ?? 0} unit="cajas" onChange={onChange}/>
     {quote?.savings != null && quote.savings > 0 && <p className="cart-line-saving">Ahorras {money(quote.savings)} en este paquete con el volumen de tu pedido. Ya incluido en el total.</p>}
     {!!quote?.components.length && <details className="order-contents">
       <summary>Ver precios aplicados dentro del paquete</summary>

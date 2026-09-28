@@ -33,12 +33,18 @@ export async function getCatalog(budget: Budget = 'all'): Promise<{packages: Pac
    if(!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
    return response.json();
   }
-  const [bundles,products]=await Promise.all([read<Bundle[]>('/public/store/bundles?budget='+encodeURIComponent(budget)),read<Product[]>('/public/store/products/in-stock')]);
+  const bundles=await read<Bundle[]>('/public/store/bundles?budget='+encodeURIComponent(budget));
+  // Current backends calculate bundle availability, including assorted bundles.
+  // Only older responses need the extra inventory request.
+  const products=bundles.some(b=>b.available==null)?await read<Product[]>('/public/store/products/in-stock'):[];
   const stock=new Map(products.map(p=>[p.id,p.currentStock]));
   const packages=bundles.filter(b=>(!ids.length||ids.includes(b.id))&&Number(b.fixedPrice)>0&&b.items.length>0&&b.items.every(i=>Number.isInteger(i.quantity)&&i.quantity>0)).map((b,index)=>{
    const quantities=new Map<number,number>(); b.items.forEach(i=>quantities.set(i.productId,(quantities.get(i.productId)||0)+i.quantity));
    return {id:b.id,name:b.name,price:Number(b.fixedPrice),available:b.available??Math.max(0,Math.min(...Array.from(quantities,([id,qty])=>Math.floor((stock.get(id)||0)/qty)))),pieces:b.items.reduce((n,i)=>n+i.quantity,0),...bundleDetails(b),tone:index%4};
   });
   return {packages:packages.filter(p=>p.available>0),demo:false};
- } catch { return {packages:[],demo:false,error:'No pudimos cargar los paquetes. Intenta nuevamente en unos momentos.'}; }
+ } catch(e) {
+  console.warn('Store catalog unavailable', {reason:e instanceof Error?e.name:'Unknown',status:e instanceof Error&&/^Catalog HTTP \d+$/.test(e.message)?e.message:undefined});
+  return {packages:[],demo:false,error:'No pudimos verificar el catálogo y sus existencias. Reintenta para continuar.'};
+ }
 }

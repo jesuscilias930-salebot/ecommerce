@@ -1,19 +1,20 @@
 import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
+import {packageQuantityLabel,isShort,usesTripares,triparesLabel} from '@/lib/sale-presentation';
 
 export function BundleContent({ item, showHeading = true }: { item: Package; showHeading?: boolean }) {
   return (
     <section className="bundle-breakdown">
       {showHeading && <h3>Todo lo que incluye tu caja</h3>}
       <p>
-        {item.items.length} productos · {item.pieces} unidades (pares de calcetines o shorts)
+        {item.items.length} productos · {packageQuantityLabel(item)}
       </p>
       <div className="bundle-table-wrap">
         <table>
           <thead>
             <tr>
               <th>Producto</th>
-              <th>Piezas</th>
+              <th>Cantidad y presentación</th>
               <th>Referencia / unidad</th>
               <th>Importe</th>
             </tr>
@@ -22,7 +23,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
             {item.items.map((i, n) => (
               <tr key={i.id ?? n}>
                 <td>{i.name}</td>
-                <td>{i.quantity}</td>
+                <td>{i.quantity} {isShort(i)?'piezas':'pares'}{usesTripares(i)&&<small style={{display:'block'}}>{triparesLabel(i.quantity)}</small>}</td>
                 <td>
                   {i.assignedUnitPrice == null
                     ? "Por confirmar"
