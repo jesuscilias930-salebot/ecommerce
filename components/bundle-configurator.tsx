@@ -17,7 +17,7 @@ export function BundleConfigurator({item,products,error}:{item:Package;products:
 }
 function Editor({item,products,error,saved}:{item:Package;products:Original[];error?:string;saved?:CartLine}){
  const {lines,configureBundle}=useContext(Context);
- const [mode,setMode]=useState(saved?.selection?'custom':'assorted');
+ const [mode,setMode]=useState(saved&&!saved.selection?'assorted':'custom');
  const [counts,setCounts]=useState<Record<number,number>>(()=>Object.fromEntries((saved?.selection||[]).map(s=>[s.productId,s.quantity])));
  const [amount,setAmount]=useState(saved?.quantity||1);
  const [added,setAdded]=useState(false);
