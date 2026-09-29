@@ -21,7 +21,6 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
  const [amount,setAmount]=useState(saved?.quantity||1);
  const [added,setAdded]=useState(false);
  const candidates=products.filter(p=>p.categoryId===item.items[0].categoryId).sort((a,b)=>a.id-b.id);
- const genders=[...new Set(candidates.map(p=>p.gender||'Sin género'))];
  const total=item.items.reduce((n,i)=>n+i.quantity,0);
  const selection:Selection=Object.entries(counts).filter(([,n])=>n>0).map(([id,quantity])=>({productId:Number(id),quantity}));
  const selected=selection.reduce((n,s)=>n+s.quantity,0);
@@ -30,30 +29,34 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
  const proposed:CartLine={id:item.id,quantity:amount,...(mode==='assorted'?{}:{selection})};
  const preview=useCartQuote(valid?[...lines.filter(l=>l.id!==item.id),proposed]:[],valid);
  const box=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
- function preset(gender:string){
-  let remaining=total;const next:Record<number,number>={};
-  for(const p of candidates.filter(p=>(p.gender||'Sin género')===gender)){const n=Math.min(remaining,Math.floor(p.currentStock/Math.max(1,amount)));if(n>0)next[p.id]=n;remaining-=n;}
-  setCounts(next);setMode(gender);setAdded(false);
+ function updateCount(id:number,value:number){
+  setCounts(v=>({...v,[id]:Number.isFinite(value)?Math.max(0,Math.min(total,Math.trunc(value))):0}));
+  setMode('custom');setAdded(false);
  }
  return <section className={styles.panel} aria-labelledby="choose-box-title">
+  <div className={styles.price} aria-live="polite">
+   <strong>{money(valid&&box?box.unitPrice:item.price)} <small>MXN / caja</small></strong>
+   <span>{valid&&box?'Precio con tu carrito':'Precio de referencia'} · IVA incluido · Envío aparte</span>
+  </div>
   <h2 id="choose-box-title">Personalizar géneros</h2>
-  <p>{total} pares por caja. Tú eliges los géneros; los diseños y colores se surten según existencias.</p>
-  <fieldset className={styles.options}><legend>Opciones rápidas</legend>
-   <button type="button" aria-pressed={mode==='assorted'} onClick={()=>{setMode('assorted');setCounts({});setAdded(false);}}>Surtido según existencias</button>
-   {genders.map(g=><button type="button" key={g} aria-pressed={mode===g} disabled={!!error||candidates.filter(p=>(p.gender||'Sin género')===g).reduce((n,p)=>n+p.currentStock,0)<total*Math.max(1,amount)} onClick={()=>preset(g)}>{genderName(g)}</button>)}
-  </fieldset>
-  {mode==='assorted'?<p className={styles.note}>Puedes agregar la caja surtida sin llenar cantidades, o repartir los pares por género aquí abajo. En surtido nosotros elegimos la mezcla según existencias.</p>:<p className={styles.note}>Tu elección se aplica a cada caja. El precio se calcula con las variantes seleccionadas y todo tu carrito.</p>}
+  <p>Elige cómo repartir tus {total} pares o deja que armemos tu surtido.</p>
   {error&&<p role="alert">{error} <button type="button" onClick={()=>window.location.reload()}>Reintentar</button></p>}
   <div className={styles.mix}>
-   <p>Reparte los {total} pares como prefieras. Por ejemplo, puedes combinar niña, niño y adulto cuando estén disponibles.</p>
-   {genders.map(g=><fieldset key={g} disabled={!!error}><legend>{genderName(g)}</legend>{candidates.filter(p=>(p.gender||'Sin género')===g).map(p=><label key={p.id}><span>{p.name}{p.size&&<small>Talla: {p.size}</small>}</span><input type="number" min={0} max={total} step={1} inputMode="numeric" aria-label={`Pares de ${genderName(g)}${p.size?` talla ${p.size}`:''} por caja`} value={counts[p.id]||0} onChange={e=>{setCounts(v=>({...v,[p.id]:Math.max(0,Math.min(total,Math.trunc(Number(e.target.value))))}));setMode('custom');setAdded(false);}}/></label>)}</fieldset>)}
+   {candidates.map(p=>{const label=`${genderName(p.gender||'Sin género')}${p.size?` · ${p.size}`:''}`;return <div className={styles.row} key={p.id}>
+    <label htmlFor={`gender-${item.id}-${p.id}`}>{label}</label>
+    <div className={styles.stepper}>
+     <button type="button" aria-label={`Quitar un par de ${label}`} disabled={!!error||!(counts[p.id]>0)} onClick={()=>updateCount(p.id,(counts[p.id]||0)-1)}>−</button>
+     <input id={`gender-${item.id}-${p.id}`} disabled={!!error} type="number" min={0} max={total} step={1} inputMode="numeric" placeholder="—" aria-label={`Pares de ${label} por caja`} value={mode==='assorted'?'':counts[p.id]||0} onChange={e=>updateCount(p.id,Number(e.target.value))}/>
+     <button type="button" aria-label={`Agregar un par de ${label}`} disabled={!!error||selected>=total} onClick={()=>updateCount(p.id,(counts[p.id]||0)+1)}>+</button>
+    </div>
+   </div>;})}
    {selection.some(s=>!candidates.some(p=>p.id===s.productId))&&<p role="alert">Una variante de tu selección ya no está disponible. <button type="button" onClick={()=>setCounts({})}>Elegir otra combinación</button></p>}
   </div>
-  {mode!=='assorted'&&<div className={styles.progress} role="status"><strong>{selected} de {total} pares por caja</strong><progress max={total} value={Math.min(selected,total)}/><span>{selected===total?'Tu caja está completa':selected<total?`Faltan ${total-selected} pares`:`Quita ${selected-total} pares`}</span></div>}
+  {mode==='assorted'?<p className={styles.note} role="status">Surtido automático · {total} pares. Nosotros elegimos la mezcla.</p>:<div className={styles.progress} role="status"><strong>{selected} de {total} pares · {selected===total?'Caja completa':selected<total?`Faltan ${total-selected}`:`Quita ${selected-total}`}</strong><progress max={total} value={Math.min(selected,total)}/><button type="button" className={styles.reset} onClick={()=>{setMode('assorted');setCounts({});setAdded(false);}}>Restablecer a surtido</button></div>}
   <label className={styles.amount}>Cantidad de cajas<input type="number" min={1} max={99} value={amount} onChange={e=>{setAmount(Number(e.target.value));setAdded(false);}}/></label>
   {saved&&<p className={styles.note}>Ya tienes {saved.quantity} {saved.quantity===1?'caja':'cajas'} de este paquete. Al guardar se reemplazarán por esta cantidad y combinación.</p>}
-  <div className={styles.price} aria-live="polite">
-   {valid?(box?<><strong>{money(box.unitPrice)} por caja</strong><span>{money(box.subtotal)} por {amount} {amount===1?'caja':'cajas'} · IVA incluido, envío aparte.</span>{mode!=='assorted'&&<ul>{box.components.map(c=><li key={c.productId}>{c.perUnitQuantity} pares · {c.name}</li>)}</ul>}</>:preview.quoteError?<><p>{preview.quoteError}</p><button type="button" onClick={preview.retryQuote}>Reintentar precio y existencias</button></>:<p>Verificando precio y existencias…</p>):<p>{!amountValid?'Elige de 1 a 99 cajas.':'Completa los pares para verificar tu precio.'}</p>}
+  <div className={styles.status} aria-live="polite">
+   {valid?(box?(amount>1?<p>Total de {amount} cajas: <strong>{money(box.subtotal)}</strong></p>:null):preview.quoteError?<><p>{preview.quoteError}</p><button type="button" onClick={preview.retryQuote}>Reintentar precio y existencias</button></>:<p>Verificando precio y existencias…</p>):!amountValid?<p>Elige de 1 a 99 cajas.</p>:null}
   </div>
   <button type="button" className="primary" disabled={!valid||!box} onClick={()=>{configureBundle(item.id,amount,proposed.selection);setAdded(true);}}>{saved?'Guardar cambios en mi carrito':mode==='assorted'?'Agregar caja surtida al carrito':'Agregar caja personalizada al carrito'}</button>
   {(added||saved)&&<p role="status"><Link className="text-link" href="/carrito">{added?'Caja guardada. ':''}Revisar mi carrito →</Link></p>}

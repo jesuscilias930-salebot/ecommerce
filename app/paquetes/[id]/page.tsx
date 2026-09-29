@@ -34,7 +34,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
       <div className={styles.detailMain}>
         <StorePhoto zoom images={item.imageUrls} src={item.imageUrl} name={item.name}><BoxArt tone={item.tone} large/></StorePhoto>
         <nav className={styles.jumpLinks} aria-label="Información del paquete"><a href="#contenido-paquete">Qué incluye</a><a href="#dudas-paquete">Envío y compra</a><Link href="/referencias">Referencias de clientes</Link></nav>
-        <section id="contenido-paquete" className={styles.content} aria-labelledby="content-title"><h2 id="content-title">Todo lo que incluye tu caja</h2><BundleContent item={item} showHeading={false}/><p className="fine-print">Consulta las tallas registradas en el desglose y las condiciones de surtido en la descripción. La fotografía no garantiza diseños o colores distintos de los expresamente ofrecidos.</p></section>
+        {!canCustomize&&<section id="contenido-paquete" className={styles.content} aria-labelledby="content-title"><h2 id="content-title">Todo lo que incluye tu caja</h2><BundleContent item={item} showHeading={false}/><p className="fine-print">Consulta las tallas registradas en el desglose y las condiciones de surtido en la descripción. La fotografía no garantiza diseños o colores distintos de los expresamente ofrecidos.</p></section>}
         <section id="dudas-paquete" className={styles.content} aria-labelledby="questions-title"><h2 id="questions-title">Resuelve tus dudas antes de comprar</h2>
           <details><summary>¿Cuánto pagaré de envío?</summary><p>El envío no está incluido en el precio de la caja. Al continuar al checkout, completa tu dirección para ver las opciones disponibles y elegir una antes del pago.</p></details>
           <details><summary>¿Necesito registrarme?</summary><p>No. Puedes preparar tu pedido como invitado. También puedes concluirlo por WhatsApp y recibir atención para coordinar tu compra.</p></details>
@@ -45,16 +45,21 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
       <section className={styles.purchaseBox} id="comprar-paquete" aria-labelledby="bundle-title" style={{scrollMarginTop:20}}>
         <span className="eyebrow">CAJA DE MAYOREO · COMPRA COMO INVITADO</span><h1 id="bundle-title">{item.name}</h1>
         {canCustomize&&<BundleConfigurator item={item} products={variants} error={variantError}/>}
-        <BundleDescription text={item.description}/>
+        {!canCustomize&&<><BundleDescription text={item.description}/>
         <p className="detail-price">{money(item.price)} <small>MXN</small></p><p>Precio de referencia por caja · IVA incluido. Verás el costo de envío y el total antes de pagar.</p>
         <dl className={styles.facts}><div><dt>Contenido por caja</dt><dd>{packageQuantityLabel(item)}</dd></div><div><dt>Promedio de referencia por unidad</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
-        {!canCustomize&&<AddButton key={item.id} item={item} chooseQuantity/>}
+        <AddButton key={item.id} item={item} chooseQuantity/></>}
         <PurchaseConfidence/>
-        <TestimonialPhotos limit={2} compact/>
+        {!canCustomize&&<TestimonialPhotos limit={2} compact/>}
       </section>
     </div>
+    {canCustomize&&<section id="contenido-paquete" className={styles.content} aria-label="Detalles del paquete">
+      <details><summary>Descripción y condiciones del surtido</summary><BundleDescription text={item.description}/><p>Los diseños y colores se envían según existencias. La combinación elegida se aplica a cada caja.</p></details>
+      <details><summary>Contenido, tallas y medidas</summary><BundleContent item={item} showHeading={false}/></details>
+      <TestimonialPhotos limit={2} compact/>
+    </section>}
     {related.length>0&&<section className={styles.content} aria-labelledby="related-title"><h2 id="related-title">Otras opciones para tu negocio</h2><p>Paquetes disponibles con productos en común o una inversión cercana. Compara el contenido antes de elegir.</p><div className="product-grid">{related.map(candidate=><Card key={candidate.id} item={candidate}/>)}</div><Link className="text-link" href="/paquetes">Comparar todos los paquetes →</Link></section>}
-    <div className={styles.mobilePurchase}><div><strong>{money(item.price)}</strong><small>{packageQuantityLabel(item)} · Más envío</small></div><a href="#comprar-paquete">{canCustomize?'Personalizar géneros ↑':'Elegir cantidad ↑'}</a></div>
+    <div className={styles.mobilePurchase}><div><strong>{canCustomize?packageQuantityLabel(item):money(item.price)}</strong><small>{canCustomize?'Elige tu surtido':`${packageQuantityLabel(item)} · Más envío`}</small></div><a href="#comprar-paquete">{canCustomize?'Personalizar géneros ↑':'Elegir cantidad ↑'}</a></div>
   </main>;
 }
