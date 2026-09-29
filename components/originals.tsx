@@ -1,7 +1,8 @@
 "use client";
 import {QuantityInput} from './quantity-input';
 import "./volume-pricing.css";
-import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, shortProduct, volumePricingMessage } from "@/lib/live-pricing";
+import { calculateGroups, pricingKey, pricingName, shortProduct } from "@/lib/live-pricing";
+import {CategoryPricing} from './category-pricing';
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
 import { useContext, useState, useId, useEffect } from "react";
@@ -14,7 +15,6 @@ import {
   Plus,
   Minus,
   ArrowUpRight,
-  Check,
 } from "lucide-react";
 import { Context } from "./shop";
 import type { Original } from "@/lib/product-catalog";
@@ -24,7 +24,7 @@ import { groupByCategory } from "@/lib/product-categories";
 import categoryStyles from "./product-categories.module.css";
 import {PurchaseReferences} from './testimonial-gallery';
 import {cartCount} from '@/lib/bundle-selection';
-import {fixedPairsInCart,lowestTier,nextDiscount} from '@/lib/price-preview';
+import {fixedPairsInCart} from '@/lib/price-preview';
 import {ProductViewEvent} from './product-view-event';
 
 function SockVisual({ product }: { product: Original }) {
@@ -114,6 +114,7 @@ export function Originals({
     matchesSearch(`${p.name} ${p.category || ""} ${p.pricingGroup || ""} ${p.gender || ''}`,query),
   );
   const categories = groupByCategory(filtered);
+  const allCategories = groupByCategory(products);
   const groups = calculateGroups(products, lines, packages);
   const categoryId = (key:string) => `products-${Array.from(key,c=>c.codePointAt(0)!.toString(16)).join('-')}`;
   return (
@@ -155,27 +156,14 @@ export function Originals({
         <span>
           {filtered.length} productos <span>· Mayoreo a tu medida</span>
         </span>
-        <small>Combina variantes. Ahorra por volumen.</small>
+        <small>1. Elige cantidades · 2. Agrega al carrito · 3. Consulta tu tarifa</small>
       </div>
       {categories.length>1&&<nav className={categoryStyles.navigation} aria-label="Ir a una categoría">
         {categories.map(category=><a key={category.key} href={`#${categoryId(category.key)}`}>{category.label}<span>{category.products.length}</span></a>)}
       </nav>}
       {categories.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
         <header className={categoryStyles.header}><h2 id={`${categoryId(category.key)}-title`}>{category.label}</h2><span>{category.products.length} {category.products.length===1?'producto':'productos'}</span></header>
-        {hasCategoryVolume(category.products[0]) && <details className="category-volume-summary">
-          <summary>Combina géneros y ahorra · {groups.find(g=>g.key===pricingKey(category.products[0]))?.quantity || 0} pares en tu carrito</summary>
-          <div>
-            <strong>Combina géneros de {category.label} y alcanza el precio por volumen</strong>
-            <p>Sumamos los pares de las cajas y los productos individuales de esta categoría en tu carrito. Cada modelo aplica su propia tarifa para esa cantidad total.</p>
-            <p className={categoryStyles.example}>Por ejemplo: <b>25 pares de dama + 25 de caballero = rango de 50 pares.</b></p>
-            <small>Los pares dentro de tus paquetes también cuentan. Otras categorías se calculan por separado.</small>
-          </div>
-          <div className={categoryStyles.volumeCount} role="status" aria-live="polite" aria-atomic="true">
-            <span>En tu carrito · {category.label}</span>
-            <b>{groups.find(g=>g.key===pricingKey(category.products[0]))?.quantity || 0} pares</b>
-            <span>El precio se actualiza al agregar o quitar pares.</span>
-          </div>
-        </details>}
+        <CategoryPricing products={allCategories.find(group=>group.key===category.key)?.products||category.products} groups={groups} incomplete={lines.some(line=>line.id>0&&!packages.some(item=>item.id===line.id))}/>
         <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages}/>)}</div>
       </section>)}
       {!filtered.length && (
@@ -202,6 +190,7 @@ function OriginalCard({
   const unit = shortProduct(p) ? 'pieza' : 'par';
   const units = shortProduct(p) ? 'piezas' : 'pares';
   const [amount, setAmount] = useState(1);
+  const removeQuantity=Math.min(quantity,Number.isInteger(amount)&&amount>0?amount:1);
   const inputId = useId();
   const max = Math.max(
     0,
@@ -222,8 +211,6 @@ function OriginalCard({
     { id: -p.id, quantity: quantity + (valid ? amount : 0) },
   ], packages).find((g) => g.key === pricingKey(p));
   const proposedRow = proposed?.rows.find((l) => l.id === -p.id);
-  const nextTier=valid&&proposedRow?.price!=null?nextDiscount(p.rules,proposed?.quantity||0,proposedRow.price):null;
-  const lowest=lowestTier(p.rules);
   return (
     <article className="original-product">
       <div className="original-visual">
@@ -271,43 +258,8 @@ function OriginalCard({
             </small>
           )}
         </div>
-        <details className="original-tiers"><summary>Ver descuentos y detalles del producto</summary>
-          {lowest&&<p>Desde {money(Number(lowest.pricePerUnit))} por {unit} al reunir {lowest.minQuantity} {units} de {pricingName(p)}{lowest.maxQuantity!=null&&lowest.maxQuantity!==2147483647?` (hasta ${lowest.maxQuantity})`:''}.</p>}
-          <table>
-            <caption>Tarifa resaltada: vista previa del grupo</caption>
-            <thead>
-              <tr>
-                <th>{shortProduct(p) ? 'Piezas' : 'Pares'}</th>
-                <th>Precio / {unit}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.rules.map((r, i) => (
-                <tr
-                  key={i}
-                  className={
-                    valid &&
-                    proposedRow?.price != null &&
-                    (proposed?.quantity || 0) >= r.minQuantity &&
-                    (r.maxQuantity == null ||
-                      (proposed?.quantity || 0) <= r.maxQuantity)
-                      ? "tier-applied"
-                      : ""
-                  }
-                >
-                  <td>
-                    {r.minQuantity}
-                    {r.maxQuantity === null || r.maxQuantity === 2147483647 ? "+" : `–${r.maxQuantity}`}
-                  </td>
-                  <td>{money(Number(r.pricePerUnit))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <details className="original-tiers"><summary>Ver detalles del producto</summary>
           <dl><dt>Talla del producto</dt><dd>{p.details?.sizeRange||p.size||'Rango pendiente de confirmar; consulta antes de comprar.'}</dd>{p.details?.material&&<><dt>Material</dt><dd>{p.details.material}</dd></>}{p.details?.height&&<><dt>Altura</dt><dd>{p.details.height}</dd></>}</dl>
-        <p className="original-volume">
-          {volumePricingMessage(p)}
-        </p>
         {p.details?.assortment&&<p>{p.details.assortment}</p>}
         </details>
         <div className="original-purchase">
@@ -339,32 +291,7 @@ function OriginalCard({
               </button>
             </div>
           </div>
-          {valid && proposedRow?.price != null && (
-            <div className="card-saving">
-              {nextTier ? (
-                <>
-                  <p>
-                    Agrega {nextTier.missing}{" "}
-                    {units} más del grupo <b>{pricingName(p)}</b> y
-                    ahorra{" "}
-                    <b>
-                      {money(nextTier.savingPerUnit)}{" "}
-                      por {unit} de este modelo
-                    </b>
-                    .
-                  </p>
-                  <progress
-                    value={proposed?.quantity || 0}
-                    max={nextTier.quantity}
-                    aria-label="Progreso hacia la siguiente tarifa"
-                  />
-                  <small>Próxima tarifa: {money(nextTier.price)} / {unit}. Sujeto a existencias.</small>
-                </>
-              ) : (
-                <p>✓ Mejor tarifa disponible para este modelo.</p>
-              )}
-            </div>
-          )}
+          {quantity>0&&<div className="original-cart-adjust"><span>{quantity} {units} en el carrito</span><button type="button" aria-label={`Quitar ${removeQuantity} ${removeQuantity===1?unit:units} de ${p.name} del carrito`} onClick={()=>change(-p.id,quantity-removeQuantity)}>Quitar {removeQuantity}</button><button type="button" onClick={()=>change(-p.id,0)} aria-label={`Quitar todos los ${p.name} individuales del carrito`}>Quitar todos</button></div>}
           <button
             className="original-add"
             disabled={!valid||proposedRow?.price==null}
@@ -374,14 +301,6 @@ function OriginalCard({
             <ArrowUpRight size={17} />
           </button>
           {!valid&&<p role="status">{max<1?'Sin existencias adicionales para agregar.':`Escribe entre 1 y ${max} ${units}.`}</p>}
-          <p className="original-added" role="status">
-            {quantity > 0 && (
-              <>
-                <Check size={13} />
-                {quantity} {units} en tu carrito
-              </>
-            )}
-          </p>
         </div>
       </div>
     </article>
