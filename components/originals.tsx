@@ -1,4 +1,5 @@
 "use client";
+import {QuantityInput} from './quantity-input';
 import "./volume-pricing.css";
 import { calculateGroups, pricingKey, pricingName, hasCategoryVolume, shortProduct, volumePricingMessage } from "@/lib/live-pricing";
 import type { Package } from "@/lib/catalog";
@@ -325,9 +326,8 @@ function OriginalCard({
               >
                 <Minus size={14} />
               </button>
-              <input
+              <QuantityInput
                 id={inputId}
-                type="number"
                 min="1"
                 max={max || 1}
                 value={amount}

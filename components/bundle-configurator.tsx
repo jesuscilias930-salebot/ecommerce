@@ -1,4 +1,5 @@
 'use client';
+import {QuantityInput} from './quantity-input';
 import {useContext,useState} from 'react';
 import Link from 'next/link';
 import {Context} from './shop';
@@ -46,14 +47,14 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
     <label htmlFor={`gender-${item.id}-${p.id}`}>{label}</label>
     <div className={styles.stepper}>
      <button type="button" aria-label={`Quitar un par de ${label}`} disabled={!!error||!(counts[p.id]>0)} onClick={()=>updateCount(p.id,(counts[p.id]||0)-1)}>−</button>
-     <input id={`gender-${item.id}-${p.id}`} disabled={!!error} type="number" min={0} max={total} step={1} inputMode="numeric" placeholder="—" aria-label={`Pares de ${label} por caja`} value={mode==='assorted'?'':counts[p.id]||0} onChange={e=>updateCount(p.id,Number(e.target.value))}/>
+     <QuantityInput id={`gender-${item.id}-${p.id}`} disabled={!!error} min={0} max={total} placeholder="—" aria-label={`Pares de ${label} por caja`} value={mode==='assorted'?'':counts[p.id]||0} onChange={e=>updateCount(p.id,Number(e.target.value))}/>
      <button type="button" aria-label={`Agregar un par de ${label}`} disabled={!!error||selected>=total} onClick={()=>updateCount(p.id,(counts[p.id]||0)+1)}>+</button>
     </div>
    </div>;})}
    {selection.some(s=>!candidates.some(p=>p.id===s.productId))&&<p role="alert">Una variante de tu selección ya no está disponible. <button type="button" onClick={()=>setCounts({})}>Elegir otra combinación</button></p>}
   </div>
   {mode==='assorted'?<p className={styles.note} role="status">Surtido automático · {total} pares. Nosotros elegimos la mezcla.</p>:<div className={styles.progress} role="status"><strong>{selected} de {total} pares · {selected===total?'Caja completa':selected<total?`Faltan ${total-selected}`:`Quita ${selected-total}`}</strong><progress max={total} value={Math.min(selected,total)}/><button type="button" className={styles.reset} onClick={()=>{setMode('assorted');setCounts({});setAdded(false);}}>Restablecer a surtido</button></div>}
-  <label className={styles.amount}>Cantidad de cajas<input type="number" min={1} max={99} value={amount} onChange={e=>{setAmount(Number(e.target.value));setAdded(false);}}/></label>
+  <label className={styles.amount}>Cantidad de cajas<QuantityInput min={1} max={99} value={amount} onChange={e=>{setAmount(Number(e.target.value));setAdded(false);}}/></label>
   {saved&&<p className={styles.note}>Ya tienes {saved.quantity} {saved.quantity===1?'caja':'cajas'} de este paquete. Al guardar se reemplazarán por esta cantidad y combinación.</p>}
   <div className={styles.status} aria-live="polite">
    {valid?(box?(amount>1?<p>Total de {amount} cajas: <strong>{money(box.subtotal)}</strong></p>:null):preview.quoteError?<><p>{preview.quoteError}</p><button type="button" onClick={preview.retryQuote}>Reintentar precio y existencias</button></>:<p>Verificando precio y existencias…</p>):!amountValid?<p>Elige de 1 a 99 cajas.</p>:null}

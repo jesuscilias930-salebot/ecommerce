@@ -5,6 +5,7 @@ import { packageQuantityLabel } from "@/lib/sale-presentation";
 import { bundleVolumeMessages } from "@/lib/live-pricing";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback } from "react";
 import {useCartQuote} from './use-cart-quote';
+import {QuantityInput} from './quantity-input';
 import type {CartQuote} from '@/lib/cart-quote';
 import {validSelection,cleanSelection,customizable,type CartLine,type Selection} from '@/lib/bundle-selection';
 import {completedCart,CHECKOUT_ATTEMPT_KEY} from '@/lib/completed-cart';
@@ -163,7 +164,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   return (
     <div className="bundle-purchase-actions">
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar
-        <input type="number" min={1} max={limit || 1} value={amount} onChange={event=>{setAmount(Number(event.target.value));setAdded(false);}}/>
+        <QuantityInput min={1} max={limit || 1} value={amount} onChange={event=>{setAmount(Number(event.target.value));setAdded(false);}}/>
         <small>{valid ? `${amount * item.pieces} unidades · ${quotedBox ? money(quotedBox.unitPrice)+' por caja al combinar con tu carrito' : preview.quoteError || 'Calculando precio con todo tu pedido…'}` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
       </label>}
       {chooseQuantity&&preview.quote&&<p role="status">Pedido completo: <b>{money(preview.quote.subtotal)} MXN</b> · {preview.quote.totalPairs} unidades. IVA incluido; envío aparte.{preview.quote.savings!=null&&preview.quote.savings>0?` Ahorro al combinar: ${money(preview.quote.savings)}.`:''}</p>}

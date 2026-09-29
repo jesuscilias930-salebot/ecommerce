@@ -30,7 +30,7 @@ export function CartQuantity({name,quantity,max,unit,onChange}:{name:string;quan
       <div><label htmlFor={id} className={styles.label}>Cantidad de {unit}</label>
         <div className={styles.stepper}>
           <button type="button" disabled={quantity<=1||!limit} aria-label={`Reducir una unidad de ${name}`} onMouseDown={e=>e.preventDefault()} onClick={()=>step(-1)}><Minus size={18}/></button>
-          <input id={id} type="text" inputMode="numeric" pattern="[0-9]*" aria-label={`Cantidad de ${name}`} aria-describedby={`${id}-hint`} aria-invalid={!!error} value={draft??String(quantity)} onChange={e=>{setDraft(e.target.value);setError("");}} onBlur={commit} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();commit();}if(e.key==="Escape"){setDraft(null);setError("");}}}/>
+          <input id={id} type="text" inputMode="numeric" pattern="[0-9]*" aria-label={`Cantidad de ${name}`} aria-describedby={`${id}-hint`} aria-invalid={!!error} value={draft??String(quantity)} onChange={e=>{if(/^\d*$/.test(e.target.value)){setDraft(e.target.value.replace(/^0+(?=\d)/,''));setError("");}}} onBlur={commit} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();commit();}if(e.key==="Escape"){setDraft(null);setError("");}}}/>
           <button type="button" disabled={quantity>=limit} aria-label={`Agregar una unidad de ${name}`} onMouseDown={e=>e.preventDefault()} onClick={()=>step(1)}><Plus size={18}/></button>
         </div>
       </div>
