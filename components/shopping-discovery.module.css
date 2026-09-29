@@ -24,6 +24,8 @@
 .compareStatus a{padding:10px 14px;background:#DCE8A0;border-radius:8px;font-weight:600;}
 .detailLayout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:40px;align-items:start;margin-top:26px;}
 .detailMain{min-width:0;}
+.customizableLayout{grid-template-columns:minmax(0,1fr) minmax(340px,1fr);gap:28px;}
+.customizableLayout .purchaseBox{position:static;}
 .detailMain>div:first-child{max-height:650px;}
 .purchaseBox{position:sticky;top:20px;border:1px solid #DEDFD6;border-radius:18px;background:white;padding:28px;}
 .purchaseBox h1{font-size:clamp(28px,3vw,42px);line-height:1.12;margin:12px 0;overflow-wrap:anywhere;}

@@ -30,7 +30,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
   return <main id="contenido" className={`section ${styles.detailPage}`}>
     {data.demo&&<p className="demo">Paquete de demostración · Contenido y precio ilustrativos</p>}
     <nav className={styles.breadcrumbs} aria-label="Ruta de navegación"><Link href="/">Inicio</Link><span aria-hidden="true">/</span><Link href="/paquetes">Paquetes</Link><span aria-hidden="true">/</span><span aria-current="page">{item.name}</span></nav>
-    <div className={styles.detailLayout}>
+    <div className={`${styles.detailLayout} ${canCustomize?styles.customizableLayout:''}`}>
       <div className={styles.detailMain}>
         <StorePhoto zoom images={item.imageUrls} src={item.imageUrl} name={item.name}><BoxArt tone={item.tone} large/></StorePhoto>
         <nav className={styles.jumpLinks} aria-label="Información del paquete"><a href="#contenido-paquete">Qué incluye</a><a href="#dudas-paquete">Envío y compra</a><Link href="/referencias">Referencias de clientes</Link></nav>
@@ -43,16 +43,18 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
         </section>
       </div>
       <section className={styles.purchaseBox} id="comprar-paquete" aria-labelledby="bundle-title" style={{scrollMarginTop:20}}>
-        <span className="eyebrow">CAJA DE MAYOREO · COMPRA COMO INVITADO</span><h1 id="bundle-title">{item.name}</h1><BundleDescription text={item.description}/>
+        <span className="eyebrow">CAJA DE MAYOREO · COMPRA COMO INVITADO</span><h1 id="bundle-title">{item.name}</h1>
+        {canCustomize&&<BundleConfigurator item={item} products={variants} error={variantError}/>}
+        <BundleDescription text={item.description}/>
         <p className="detail-price">{money(item.price)} <small>MXN</small></p><p>Precio de referencia por caja · IVA incluido. Verás el costo de envío y el total antes de pagar.</p>
         <dl className={styles.facts}><div><dt>Contenido por caja</dt><dd>{packageQuantityLabel(item)}</dd></div><div><dt>Promedio de referencia por unidad</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
-        {canCustomize?<BundleConfigurator item={item} products={variants} error={variantError}/>:<AddButton key={item.id} item={item} chooseQuantity/>}
+        {!canCustomize&&<AddButton key={item.id} item={item} chooseQuantity/>}
         <PurchaseConfidence/>
         <TestimonialPhotos limit={2} compact/>
       </section>
     </div>
     {related.length>0&&<section className={styles.content} aria-labelledby="related-title"><h2 id="related-title">Otras opciones para tu negocio</h2><p>Paquetes disponibles con productos en común o una inversión cercana. Compara el contenido antes de elegir.</p><div className="product-grid">{related.map(candidate=><Card key={candidate.id} item={candidate}/>)}</div><Link className="text-link" href="/paquetes">Comparar todos los paquetes →</Link></section>}
-    <div className={styles.mobilePurchase}><div><strong>{money(item.price)}</strong><small>{packageQuantityLabel(item)} · Más envío</small></div><a href="#comprar-paquete">Elegir cantidad ↑</a></div>
+    <div className={styles.mobilePurchase}><div><strong>{money(item.price)}</strong><small>{packageQuantityLabel(item)} · Más envío</small></div><a href="#comprar-paquete">{canCustomize?'Personalizar géneros ↑':'Elegir cantidad ↑'}</a></div>
   </main>;
 }

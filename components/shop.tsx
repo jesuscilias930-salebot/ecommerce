@@ -159,7 +159,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   const review = chooseQuantity && added && quantity > 0;
   const preview=useCartQuote([...lines.filter(l=>l.id!==item.id),{id:item.id,quantity:quantity+amount}],chooseQuantity&&valid&&!review);
   const quotedBox=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
-  if(customizable(item))return <Link className="primary" href={`/paquetes/${item.id}#comprar-paquete`}>Elegir mi caja <ArrowRight size={18}/></Link>;
+  if(customizable(item))return <Link className="primary" href={`/paquetes/${item.id}#comprar-paquete`}>Personalizar géneros <ArrowRight size={18}/></Link>;
   return (
     <div className="bundle-purchase-actions">
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar
