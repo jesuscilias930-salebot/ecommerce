@@ -1,4 +1,5 @@
 import type {Package} from './catalog';
+import type {CartLine} from './bundle-selection';
 import type {Original} from './product-catalog';
 export const individualVolume=(p:Original)=>/deport|licra/.test((p.category||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
 export const shortProduct=(p:Original)=>/\bshorts?\b/i.test(p.name+' '+(p.category||''));
@@ -35,8 +36,8 @@ export function bundleVolumeMessages(item:Package):string[] {
  });
  return [...new Map(messages.map(message=>[message.normalize('NFC').replace(/\s+/g,' ').trim().toLocaleLowerCase('es-MX'),message])).values()];
 }
-export function calculateGroups(products:Original[],lines:{id:number;quantity:number}[],packages:Package[]=[]) {
- const boxed=lines.filter(l=>l.id>0).flatMap(l=>(packages.find(p=>p.id===l.id)?.items||[]).map(i=>({id:-(i.productId||0),assorted:!!i.assorted,quantity:i.quantity*l.quantity,product:products.find(p=>p.id===i.productId)||(i.assorted&&i.categoryId!=null?products.find(p=>p.categoryId===i.categoryId):undefined)})));
+export function calculateGroups(products:Original[],lines:CartLine[],packages:Package[]=[]) {
+ const boxed=lines.filter(l=>l.id>0).flatMap(l=>(l.selection?.map(s=>({...s,assorted:false,categoryId:undefined}))||packages.find(p=>p.id===l.id)?.items||[]).map(i=>({id:-(i.productId||0),assorted:!!i.assorted,quantity:i.quantity*l.quantity,product:products.find(p=>p.id===i.productId)||(i.assorted&&i.categoryId!=null?products.find(p=>p.categoryId===i.categoryId):undefined)})));
  const productDemand=(id:number)=>lines.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0)+boxed.filter(l=>l.id===id&&!l.assorted).reduce((n,l)=>n+l.quantity,0);
  const selected=lines.filter(l=>l.id<0).map(l=>({quantity:l.quantity,product:products.find(p=>p.id===-l.id),id:l.id}));
  const keys=[...new Set([...selected,...boxed].map(l=>l.product?pricingKey(l.product):`missing:${l.id}`))];

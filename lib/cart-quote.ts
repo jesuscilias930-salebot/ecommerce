@@ -1,17 +1,20 @@
 import type {Original} from './product-catalog';
 import type {Package} from './catalog';
+import {bundleInput,validSelection,type Selection,type CartLine} from './bundle-selection';
 import {pricingKey,pricingName} from './live-pricing';
 export type CartComponent={productId:number;name:string;categoryKey:string;categoryName:string;quantity:number;perUnitQuantity:number;groupQuantity:number;unitPrice:number;subtotal:number};
 export type CartQuoteLine={kind:'PRODUCT'|'BUNDLE';itemId:number;name:string;quantity:number;unitPrice:number;subtotal:number;components:CartComponent[];referenceSubtotal:number|null;savings:number|null};
 export type CartQuote={demo?:boolean;lines:CartQuoteLine[];groups:{key:string;name:string;quantity:number;bundlePairs:number;individualPairs:number;subtotal:number}[];totalPairs:number;subtotal:number;savings:number|null};
-export type CartInput={products:{productId:number;quantity:number}[];bundles:{bundleId:number;quantity:number}[]};
-export const cartInput=(lines:{id:number;quantity:number}[]):CartInput=>({products:lines.filter(l=>l.id<0).map(l=>({productId:-l.id,quantity:l.quantity})),bundles:lines.filter(l=>l.id>0).map(l=>({bundleId:l.id,quantity:l.quantity}))});
+export type CartInput={products:{productId:number;quantity:number}[];bundles:{bundleId:number;quantity:number;selection?:Selection}[]};
+export const cartInput=(lines:CartLine[]):CartInput=>({products:lines.filter(l=>l.id<0).map(l=>({productId:-l.id,quantity:l.quantity})),bundles:lines.filter(l=>l.id>0).map(l=>bundleInput({bundleId:l.id,quantity:l.quantity,selection:l.selection}))});
 export function validCartInput(input:CartInput){
+ if(!Array.isArray(input?.bundles)||input.bundles.some(b=>!b||!validSelection(b.selection)))return false;
  return input&&Array.isArray(input.products)&&Array.isArray(input.bundles)&&input.products.length+input.bundles.length>0&&input.products.length+input.bundles.length<=200&&input.products.every(p=>p&&Number.isSafeInteger(p.productId)&&p.productId>0&&Number.isInteger(p.quantity)&&p.quantity>0&&p.quantity<=100000)&&input.bundles.every(b=>b&&Number.isSafeInteger(b.bundleId)&&b.bundleId>0&&Number.isInteger(b.quantity)&&b.quantity>0&&b.quantity<=1000);
 }
 // Only used on the server for mock catalogs; real purchases always use sockControl.
 export function demoCartQuote(input:CartInput,products:Original[],packages:Package[]):CartQuote{
  if(!validCartInput(input))throw Error('Cantidades inválidas');
+ if(input.bundles.some(b=>b.selection))throw Error('La personalización requiere inventario real');
  const articles=[...input.products.map(p=>({kind:'PRODUCT' as const,itemId:p.productId,quantity:p.quantity,name:products.find(v=>v.id===p.productId)?.name||'',items:[{productId:p.productId,quantity:1}]})),...input.bundles.map(b=>{
   const box=packages.find(v=>v.id===b.bundleId);if(!box)throw Error('Caja no disponible');return {kind:'BUNDLE' as const,itemId:b.bundleId,quantity:b.quantity,name:box.name,items:box.items};
  })];

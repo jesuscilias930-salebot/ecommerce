@@ -1,4 +1,5 @@
-export type CartLine={id:number;quantity:number};
+import {selectionKey,type Selection,type CartLine} from './bundle-selection';
+export type {CartLine} from './bundle-selection';
 export const CHECKOUT_ATTEMPT_KEY='merlyn-pending-checkout-v1';
 // Return null for an unrelated/old receipt. Preserve a cart edited since checkout.
 export function completedCart(lines:CartLine[],folio:string,raw:string|null):CartLine[]|null {
@@ -7,9 +8,9 @@ export function completedCart(lines:CartLine[],folio:string,raw:string|null):Car
   if(!attempt||typeof attempt.id!=='string'||folio!=='MS-'+attempt.id.toLowerCase())return null;
   const body=JSON.parse(attempt.body);
   if(!Array.isArray(body.products)||!Array.isArray(body.bundles))return null;
-  const purchased:CartLine[]=[...body.products.map((p:{productId:number;quantity:number})=>({id:-p.productId,quantity:p.quantity})),...body.bundles.map((b:{bundleId:number;quantity:number})=>({id:b.bundleId,quantity:b.quantity}))];
+  const purchased:CartLine[]=[...body.products.map((p:{productId:number;quantity:number})=>({id:-p.productId,quantity:p.quantity})),...body.bundles.map((b:{bundleId:number;quantity:number;selection?:Selection})=>({id:b.bundleId,quantity:b.quantity,selection:b.selection}))];
   if(!purchased.length||purchased.some(p=>!Number.isInteger(p.id)||p.id===0||!Number.isInteger(p.quantity)||p.quantity<1))return null;
-  const same=lines.length===purchased.length&&lines.every(l=>purchased.some(p=>p.id===l.id&&p.quantity===l.quantity));
+  const same=lines.length===purchased.length&&lines.every(l=>purchased.some(p=>p.id===l.id&&p.quantity===l.quantity&&selectionKey(p.selection)===selectionKey(l.selection)));
   return same?[]:lines;
  }catch{return null;}
 }

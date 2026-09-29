@@ -1,4 +1,5 @@
 import Link from "next/link";
+import {customizable,type Selection} from '@/lib/bundle-selection';
 import type { Package } from "@/lib/catalog";
 import type { CartQuoteLine } from "@/lib/cart-quote";
 import { money } from "@/lib/money";
@@ -6,9 +7,10 @@ import { CartQuantity } from "./cart-quantity";
 import { bundlePresentation, isShort, triparesLabel, usesTripares } from "@/lib/sale-presentation";
 import type { Original } from "@/lib/product-catalog";
 
-export function CartBundle({ id, quantity, item, quote, products = [], availabilityUnknown = false, onChange }: {
+export function CartBundle({ id, quantity,selection, item, quote, products = [], availabilityUnknown = false, onChange }: {
   id: number;
   quantity: number;
+  selection?:Selection;
   item?: Package;
   quote?: CartQuoteLine;
   products?: Original[];
@@ -22,7 +24,7 @@ export function CartBundle({ id, quantity, item, quote, products = [], availabil
         quantity: part.quantity, perBox: part.perUnitQuantity,
         presentation: products.find(product => product.id === part.productId) || {name: part.name, category: part.categoryName},
       }))
-    : (item?.items || []).map((part, index) => ({
+    : (selection?selection.map(s=>({...s,name:products.find(p=>p.id===s.productId)?.name||`Variante #${s.productId}`,category:products.find(p=>p.id===s.productId)?.category,id:s.productId})):(item?.items || [])).map((part, index) => ({
         key: `${part.id ?? index}`, name: part.name,
         quantity: part.quantity * quantity, perBox: part.quantity,
         presentation: products.find(product => product.id === part.productId) || {name: part.name, category: part.category},
@@ -44,6 +46,7 @@ export function CartBundle({ id, quantity, item, quote, products = [], availabil
     </div>
     <div className="cart-bundle-contents">
       <h4>Todo esto viene en tu paquete</h4>
+      {item&&customizable(item)&&<p>{selection?'Combinación elegida por ti.':'Surtido según existencias.'} <Link href={`/paquetes/${id}#comprar-paquete`}>Cambiar combinación →</Link></p>}
       <p>{units > 0 ? `${units} unidades en ${quantity === 1 ? "esta caja" : `estas ${quantity} cajas`}. ` : ""}No son productos comprados por separado.</p>
       {presentation && <div className="cart-tripar-summary"><strong>{units} pares de calcetines</strong><span>Presentación: {presentation}</span></div>}
       {contents.length > 0 ? <ul>{contents.map(part => <li key={part.key}>

@@ -6,6 +6,7 @@ import { bundleVolumeMessages } from "@/lib/live-pricing";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback } from "react";
 import {useCartQuote} from './use-cart-quote';
 import type {CartQuote} from '@/lib/cart-quote';
+import {validSelection,cleanSelection,customizable,type CartLine,type Selection} from '@/lib/bundle-selection';
 import {completedCart,CHECKOUT_ATTEMPT_KEY} from '@/lib/completed-cart';
 import {
   ShoppingBag,
@@ -26,15 +27,16 @@ import { StorePhoto } from "./store-photo";
 import { matchesSearch } from '@/lib/shopping-discovery';
 import discovery from './shopping-discovery.module.css';
 import "./purchase-actions.css";
-type Line = { id: number; quantity: number };
+type Line = CartLine;
 export const Context = createContext<{
   lines: Line[];
   quote?:CartQuote;
   quoteError?:string;
   retryQuote:()=>void;
   change: (id: number, n: number) => void;
+  configureBundle:(id:number,n:number,selection?:Selection)=>void;
   completePurchase: (folio:string) => void;
-}>({retryQuote:()=>{}, lines: [], change: () => {}, completePurchase:()=>{} });
+}>({retryQuote:()=>{}, lines: [], change: () => {},configureBundle:()=>{}, completePurchase:()=>{} });
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [ready, setReady] = useState(false);
@@ -52,12 +54,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
                     l &&
                     Number.isInteger(l.id) &&
                     l.id !== 0 &&
+                    validSelection(l.selection) &&
                     Number.isInteger(l.quantity) &&
                     l.quantity > 0,
                 )
                 .map((l) => [
                   l.id,
-                  { id: l.id, quantity: Math.min(l.quantity, 100000) },
+                  { id: l.id, quantity: Math.min(l.quantity, 100000), ...(l.selection?{selection:cleanSelection(l.selection)}:{}) },
                 ]),
             ).values(),
           ),
@@ -90,13 +93,17 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         ? old.filter((l) => l.id !== id)
         : old.some((l) => l.id === id)
           ? old.map((l) =>
-              l.id === id ? { id, quantity: Math.min(n, 100000) } : l,
+              l.id === id ? { ...l, quantity: Math.min(n, 100000) } : l,
             )
           : [...old, { id, quantity: Math.min(n, 100000) }],
     );
   }
+  function configureBundle(id:number,n:number,selection?:Selection){
+    if(!Number.isInteger(id)||id<=0||!Number.isInteger(n)||n<1||n>99||!validSelection(selection))return;
+    setLines(old=>[...old.filter(l=>l.id!==id),{id,quantity:n,...(selection?{selection:cleanSelection(selection)}:{})}]);
+  }
   return (
-    <Context.Provider value={{ lines, change, completePurchase,...pricing }}>{children}</Context.Provider>
+    <Context.Provider value={{ lines, change,configureBundle, completePurchase,...pricing }}>{children}</Context.Provider>
   );
 }
 export function Header() {
@@ -152,6 +159,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   const review = chooseQuantity && added && quantity > 0;
   const preview=useCartQuote([...lines.filter(l=>l.id!==item.id),{id:item.id,quantity:quantity+amount}],chooseQuantity&&valid&&!review);
   const quotedBox=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
+  if(customizable(item))return <Link className="primary" href={`/paquetes/${item.id}#comprar-paquete`}>Elegir mi caja <ArrowRight size={18}/></Link>;
   return (
     <div className="bundle-purchase-actions">
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar

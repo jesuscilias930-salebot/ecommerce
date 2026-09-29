@@ -1,4 +1,5 @@
 'use client';
+import {bundleInput} from '@/lib/bundle-selection';
 import {checkoutAttribution} from '@/lib/meta-attribution';
 import {useContext,useEffect,useRef,useState} from 'react';
 import {Context} from './shop';
@@ -34,7 +35,7 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
  const lock=useRef(false);
  const body=JSON.stringify({
   products:lines.filter(l=>l.id<0).map(l=>({productId:-l.id,quantity:l.quantity})).sort((a,b)=>a.productId-b.productId),
-  bundles:lines.filter(l=>l.id>0).map(l=>({bundleId:l.id,quantity:l.quantity})).sort((a,b)=>a.bundleId-b.bundleId)
+  bundles:lines.filter(l=>l.id>0).map(l=>bundleInput({bundleId:l.id,quantity:l.quantity,selection:l.selection})).sort((a,b)=>a.bundleId-b.bundleId)
  });
  const current=receipt?.body===body?receipt:null;
  async function complete(payment: 'stripe' | 'whatsapp' = 'whatsapp') {

@@ -1,4 +1,5 @@
 "use client";
+import {cartInput} from '@/lib/cart-quote';
 import { Checkout } from "./checkout";
 import { CartShipping, type ShippingEstimate } from "./cart-shipping";
 import { CartQuantity } from "./cart-quantity";
@@ -32,7 +33,7 @@ export function VolumeCart({
   // Never display address collection on the cart, even if a caller passes the wrong prop.
   const pathname = usePathname();
   const showAddress = addressPage && pathname === "/checkout";
-  const shippingKey=JSON.stringify({products:lines.filter(l=>l.id<0).map(l=>({productId:-l.id,quantity:l.quantity})),bundles:lines.filter(l=>l.id>0).map(l=>({bundleId:l.id,quantity:l.quantity}))});
+  const shippingKey=JSON.stringify(cartInput(lines));
   const [shipping,setShipping]=useState<{key:string;estimate:ShippingEstimate|null}|null>(null);
   const estimate=shipping?.key===shippingKey?shipping.estimate:null;
   const selected = lines
@@ -83,7 +84,7 @@ export function VolumeCart({
           {quoteError ? <>{quoteError}<button onClick={retryQuote}>Reintentar</button></> : "Actualizando precios y existencias…"}
         </div>}
         {!addressPage && boxes.length > 0 && <div className="cart-section-heading"><h2>Tus paquetes</h2><p>Cada tarjeta es un paquete completo. Cambia la cantidad de cajas para ajustar todo su contenido.</p></div>}
-        {!addressPage && boxes.map(l => <CartBundle key={l.id} id={l.id} quantity={l.quantity} item={l.item} quote={l.q} products={products} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity)}/>)}
+        {!addressPage && boxes.map(l => <CartBundle key={l.id} id={l.id} quantity={l.quantity} selection={l.selection} item={l.item} quote={l.q} products={products} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity)}/>)}
         {!addressPage && groups.length > 0 && <div className="cart-section-heading"><h2>Tus productos individuales</h2><p>Estos artículos se agregaron por separado y no forman parte de los paquetes de arriba.</p></div>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
           <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>

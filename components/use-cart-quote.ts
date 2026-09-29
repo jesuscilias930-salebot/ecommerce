@@ -1,7 +1,8 @@
 "use client";
 import {useEffect,useState} from 'react';
 import {cartInput,type CartQuote} from '@/lib/cart-quote';
-export function useCartQuote(lines:{id:number;quantity:number}[],enabled=true){
+import type {CartLine} from '@/lib/bundle-selection';
+export function useCartQuote(lines:CartLine[],enabled=true){
  const key=JSON.stringify(cartInput(lines)),[retry,setRetry]=useState(0),[result,setResult]=useState<{key:string;quote?:CartQuote;error?:string}>({key:''});
  useEffect(()=>{
   if(!enabled||!lines.length)return;

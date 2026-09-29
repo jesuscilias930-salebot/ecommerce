@@ -1,4 +1,7 @@
 import {PurchaseConfidence} from '@/components/store-trust';
+import {BundleConfigurator} from '@/components/bundle-configurator';
+import {customizable} from '@/lib/bundle-selection';
+import {getOriginals,type Original} from '@/lib/product-catalog';
 import {TestimonialPhotos} from '@/components/testimonial-photos';
 import {BundleDescription} from '@/components/bundle-description';
 import {BundleContent} from '@/components/bundle-content';
@@ -21,6 +24,9 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
   const item=data.packages.find(p=>String(p.id)===id);
   if(!item) notFound();
   const related=relatedPackages(item,data.packages);
+  const canCustomize=customizable(item)&&!data.demo;
+  let variants:Original[]=[];let variantError:string|undefined;
+  if(canCustomize)try{variants=await getOriginals();}catch{variantError='No pudimos cargar los géneros disponibles. Puedes elegir surtido o reintentar.';}
   return <main id="contenido" className={`section ${styles.detailPage}`}>
     {data.demo&&<p className="demo">Paquete de demostración · Contenido y precio ilustrativos</p>}
     <nav className={styles.breadcrumbs} aria-label="Ruta de navegación"><Link href="/">Inicio</Link><span aria-hidden="true">/</span><Link href="/paquetes">Paquetes</Link><span aria-hidden="true">/</span><span aria-current="page">{item.name}</span></nav>
@@ -41,7 +47,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
         <p className="detail-price">{money(item.price)} <small>MXN</small></p><p>Precio de referencia por caja · IVA incluido. Verás el costo de envío y el total antes de pagar.</p>
         <dl className={styles.facts}><div><dt>Contenido por caja</dt><dd>{packageQuantityLabel(item)}</dd></div><div><dt>Promedio de referencia por unidad</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
-        <AddButton key={item.id} item={item} chooseQuantity/>
+        {canCustomize?<BundleConfigurator item={item} products={variants} error={variantError}/>:<AddButton key={item.id} item={item} chooseQuantity/>}
         <PurchaseConfidence/>
         <TestimonialPhotos limit={2} compact/>
       </section>

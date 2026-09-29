@@ -1,4 +1,5 @@
 import {stockApi,isProductDemo} from '@/lib/product-catalog';
+import {bundleInput} from '@/lib/bundle-selection';
 import {getCatalog} from '@/lib/catalog';
 import {validateAddress} from '@/lib/shipping-address';
 import {getStoreFeatures} from '@/lib/store-features';
@@ -33,7 +34,7 @@ export async function POST(request:Request) {
    shippingAddress,
    shippingQuoteToken:typeof b.shippingQuoteToken==='string'&&b.shippingQuoteToken.length<=2048?b.shippingQuoteToken:undefined,
    products:b.products.map((l:{productId:number;quantity:number})=>({productId:l.productId,quantity:l.quantity})),
-   bundles:b.bundles.map((l:{bundleId:number;quantity:number})=>({bundleId:l.bundleId,quantity:l.quantity}))
+   bundles:b.bundles.map(bundleInput)
   });
   const expected='MS-'+b.requestId.toLowerCase();
   if(order.folio!==expected||!Number.isFinite(Number(order.subtotal)))throw Error('Invalid receipt');
