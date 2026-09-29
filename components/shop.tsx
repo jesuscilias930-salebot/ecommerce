@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { packageQuantityLabel } from "@/lib/sale-presentation";
+import { packageQuantityLabel,isShort } from "@/lib/sale-presentation";
 import { bundleVolumeMessages } from "@/lib/live-pricing";
-import { createContext, useContext, useEffect, useState, useTransition, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useTransition, useCallback, useRef } from "react";
 import {useCartQuote} from './use-cart-quote';
 import {QuantityInput} from './quantity-input';
 import type {CartQuote} from '@/lib/cart-quote';
@@ -28,6 +28,7 @@ import { StorePhoto } from "./store-photo";
 import { matchesSearch } from '@/lib/shopping-discovery';
 import discovery from './shopping-discovery.module.css';
 import "./purchase-actions.css";
+import {trackStoreEvent} from '@/lib/store-events';
 type Line = CartLine;
 export const Context = createContext<{
   lines: Line[];
@@ -40,6 +41,8 @@ export const Context = createContext<{
   completePurchase: (folio:string) => void;
 }>({retryQuote:()=>{}, lines: [], change: () => {},addAssorted:()=>{},configureBundle:()=>{}, completePurchase:()=>{} });
 export function ShopProvider({ children }: { children: React.ReactNode }) {
+  const pathname=usePathname(),scrollRoot=useRef<HTMLDivElement>(null);
+  useEffect(()=>{if(!window.location.hash)scrollRoot.current?.scrollTo({top:0});},[pathname]);
   const [lines, setLines] = useState<Line[]>([]);
   const [ready, setReady] = useState(false);
   const pricing=useCartQuote(lines,ready);
@@ -90,18 +93,26 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   },[lines,ready]);
   function change(id: number, n: number,selection?:Selection) {
     if (!Number.isInteger(n)) return;
+    const previous=lines.find(l=>cartLineKey(l)===cartLineKey({id,quantity:n,selection}))?.quantity||0;
+    if(n>previous)void trackStoreEvent('AddToCart',{id,quantity:n-previous});
     setLines(old=>setCartQuantity(old,id,n,selection));
   }
-  function addAssorted(id:number,max:number){setLines(old=>{
+  function addAssorted(id:number,max:number){
+    if(lines.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0)>=Math.min(99,max))return;
+    void trackStoreEvent('AddToCart',{id,quantity:1,mode:'assorted'});
+    setLines(old=>{
     if(old.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0)>=Math.min(99,max))return old;
     return setCartQuantity(old,id,(old.find(l=>l.id===id&&!l.selection)?.quantity||0)+1);
   });}
   function configureBundle(id:number,n:number,selection?:Selection){
     if(!Number.isInteger(id)||id<=0||!Number.isInteger(n)||n<1||n>99||!validSelection(selection))return;
+    void trackStoreEvent('ConfigurationCompleted',{id,quantity:n,mode:selection?'custom':'assorted'});
+    const previous=lines.find(l=>l.id===id&&!!l.selection===!!selection)?.quantity||0;
+    if(n>previous)void trackStoreEvent('AddToCart',{id,quantity:n-previous,mode:selection?'custom':'assorted'});
     setLines(old=>[...old.filter(l=>l.id!==id||!!l.selection!==!!selection),{id,quantity:n,...(selection?{selection:cleanSelection(selection)}:{})}]);
   }
   return (
-    <Context.Provider value={{ lines, change,addAssorted,configureBundle, completePurchase,...pricing }}>{children}<FloatingCart/></Context.Provider>
+    <Context.Provider value={{ lines, change,addAssorted,configureBundle, completePurchase,...pricing }}><div ref={scrollRoot} className="store-scroll">{children}</div><FloatingCart/></Context.Provider>
   );
 }
 function FloatingCart(){
@@ -115,12 +126,13 @@ export function Header() {
   const { lines } = useContext(Context);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchType, setSearchType] = useState('/paquetes');
+  useEffect(()=>setSearchType(pathname==='/productos'?'/productos':'/paquetes'),[pathname]);
   if(compact)return <header className="site-header checkout-header"><Link className="brand" href="/">merlyn<span>mayoreo</span></Link><Link href={pathname==='/checkout'?'/carrito':'/paquetes'}>{pathname==='/checkout'?'← Volver al carrito':'← Seguir comprando'}</Link><Link href="/ayuda">Ayuda</Link></header>;
   return (
     <>
       <div className="announcement">
-        Tu siguiente gran idea empieza con una pequeña caja.{" "}
-        <span>Mayoreo para emprender ↗</span>
+        Calcetines al mayoreo para emprender y resurtir.{" "}
+        <span>Compra sin crear una cuenta ↗</span>
       </div>
       <header className="site-header" onKeyDown={event => { if (event.key === "Escape") { setMenuOpen(false); document.getElementById("mobile-menu-toggle")?.focus(); } }}>
         <Link className="brand" href="/">
@@ -130,8 +142,8 @@ export function Header() {
           {menuOpen ? <X size={22} /> : <Menu size={22} />} Menú
         </button>
         <nav id="store-navigation" className={menuOpen ? "is-open" : ""} aria-label="Navegación principal" onClick={() => setMenuOpen(false)}>
-          <Link href="/paquetes">Paquetes para emprender</Link>
-          <Link href="/productos">Productos individuales</Link>
+          <Link href="/paquetes">Paquetes de mayoreo</Link>
+          <Link href="/productos">Arma tu pedido</Link>
           <Link href="/#preguntas">Preguntas frecuentes</Link>
         </nav>
         <Link className="bag" href="/carrito" aria-label={`Ver carrito, ${cartCount(lines)} cajas y productos`} onClick={() => setMenuOpen(false)}>
@@ -140,14 +152,14 @@ export function Header() {
           <b>{cartCount(lines)}</b>
         </Link>
       </header>
-      <div className={discovery.searchBar}>
+      {pathname!=='/productos'&&<div className={discovery.searchBar}>
         <form action={searchType} method="get" role="search">
           <select aria-label="Dónde buscar" value={searchType} onChange={event=>setSearchType(event.target.value)}><option value="/paquetes">Paquetes</option><option value="/productos">Productos</option></select>
           <input name="q" type="search" aria-label="Buscar en la tienda" placeholder="Caricatura, deportivo, dama…" maxLength={120}/>
           <button type="submit" aria-label="Buscar"><Search size={20}/></button>
         </form>
         <Link href="/referencias">Referencias de clientes</Link><Link href="/ayuda">¿Necesitas ayuda?</Link>
-      </div>
+      </div>}
     </>
   );
 }
@@ -160,7 +172,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   const limit = Math.max(0, Math.min(item.available, 99) - quantity);
   const valid = Number.isInteger(amount) && amount >= 1 && amount <= limit;
   const review = chooseQuantity && added && quantity > 0;
-  const preview=useCartQuote([...lines.filter(l=>l.id!==item.id),{id:item.id,quantity:quantity+amount}],chooseQuantity&&valid&&!review);
+  const preview=useCartQuote([...lines.filter(l=>l.id!==item.id),{id:item.id,quantity:quantity+amount}],chooseQuantity&&valid);
   const quotedBox=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
   if(customizable(item))return <div className="bundle-purchase-actions">
     <Link className="text-link" href={`/paquetes/${item.id}#comprar-paquete`}>Personalizar géneros <ArrowRight size={18}/></Link>
@@ -169,6 +181,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   </div>;
   return (
     <div className="bundle-purchase-actions">
+      {chooseQuantity&&<div className="applicable-box-price" aria-live="polite"><strong>{valid?(quotedBox?money(quotedBox.unitPrice):'Verificando precio…'):'Elige una cantidad'}</strong><span>MXN por caja · IVA incluido · Envío aparte</span>{quotedBox&&valid&&<small>{money(Math.round(quotedBox.unitPrice*100)*amount/100)} por las {amount} cajas que agregarás. Precio calculado con tu carrito.</small>}</div>}
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar
         <QuantityInput min={1} max={limit || 1} value={amount} onChange={event=>{setAmount(Number(event.target.value));setAdded(false);}}/>
         <small>{valid ? `${amount * item.pieces} unidades · ${quotedBox ? money(quotedBox.unitPrice)+' por caja al combinar con tu carrito' : preview.quoteError || 'Calculando precio con todo tu pedido…'}` : limit ? `Elige entre 1 y ${limit} cajas.` : 'Ya agregaste el máximo disponible.'}</small>
@@ -177,7 +190,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
       <button
         type="button"
         className="primary"
-        disabled={!valid}
+        disabled={!valid||(chooseQuantity&&!quotedBox)}
         onClick={() => {
           change(item.id, quantity + amount);
           setAdded(true);
@@ -192,7 +205,7 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
               : "Agregar a mi carrito"}{" "}
         <Plus size={18} />
       </button>
-      <button type="button" className="primary buy-now" disabled={chooseQuantity ? !review && !valid : !item.available || quantity > item.available} onClick={() => {
+      <button type="button" className="primary buy-now" disabled={chooseQuantity ? !review && (!valid||!quotedBox) : !item.available || quantity > item.available} onClick={() => {
         if (chooseQuantity && !review) change(item.id, quantity + amount);
         else if (!quantity) change(item.id, 1);
         router.push("/carrito");
@@ -220,7 +233,7 @@ export function Card({ item }: { item: Package }) {
         <Link href={`/paquetes/${item.id}`}>
           <h3>{item.name}</h3>
         </Link>
-        <p className="card-content-preview">{item.items.length} tipos de producto · Ver contenido y surtido en el detalle.</p>
+        <p className="card-content-preview"><strong>{packageQuantityLabel(item)}</strong> · {item.items.length} tipos de producto</p>
         <div className="price-row">
           <b>
             {money(item.price)} <small>MXN</small>
@@ -228,7 +241,7 @@ export function Card({ item }: { item: Package }) {
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
         <small>
-          IVA incluido · Envío aparte{item.pieces>0?` · Promedio ${money(item.price/item.pieces)} por unidad`:''}.
+          Referencia por caja · IVA incluido · Envío aparte{item.pieces>0?` · Promedio ${money(item.price/item.pieces)} por ${item.items.every(i=>!isShort(i))?'par':'unidad'}`:''}.
         </small>
         <details className="card-pricing-help"><summary>Precio por volumen</summary>{bundleVolumeMessages(item).map(message=><p key={message}>{message}</p>)}</details>
         <AddButton item={item} />

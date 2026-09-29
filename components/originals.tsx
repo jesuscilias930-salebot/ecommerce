@@ -23,6 +23,9 @@ import { StorePhoto } from "./store-photo";
 import { groupByCategory } from "@/lib/product-categories";
 import categoryStyles from "./product-categories.module.css";
 import {PurchaseReferences} from './testimonial-gallery';
+import {cartCount} from '@/lib/bundle-selection';
+import {fixedPairsInCart,lowestTier,nextDiscount} from '@/lib/price-preview';
+import {ProductViewEvent} from './product-view-event';
 
 function SockVisual({ product }: { product: Original }) {
   const id = useId().replaceAll(":", "");
@@ -135,7 +138,7 @@ export function Originals({
             className="original-bag"
           >
             <ShoppingBag size={21} />
-            <span>{lines.reduce((n, l) => n + l.quantity, 0)}</span>
+            <span>{cartCount(lines)}</span>
           </Link>
           <details className="original-profile">
             <summary aria-label="Información de tu cuenta">
@@ -159,7 +162,8 @@ export function Originals({
       </nav>}
       {categories.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
         <header className={categoryStyles.header}><h2 id={`${categoryId(category.key)}-title`}>{category.label}</h2><span>{category.products.length} {category.products.length===1?'producto':'productos'}</span></header>
-        {hasCategoryVolume(category.products[0]) && <aside className={categoryStyles.volumeNotice} aria-label={`Cómo funciona el mayoreo de ${category.label}`}>
+        {hasCategoryVolume(category.products[0]) && <details className="category-volume-summary">
+          <summary>Combina géneros y ahorra · {groups.find(g=>g.key===pricingKey(category.products[0]))?.quantity || 0} pares en tu carrito</summary>
           <div>
             <strong>Combina géneros de {category.label} y alcanza el precio por volumen</strong>
             <p>Sumamos los pares de las cajas y los productos individuales de esta categoría en tu carrito. Cada modelo aplica su propia tarifa para esa cantidad total.</p>
@@ -171,8 +175,8 @@ export function Originals({
             <b>{groups.find(g=>g.key===pricingKey(category.products[0]))?.quantity || 0} pares</b>
             <span>El precio se actualiza al agregar o quitar pares.</span>
           </div>
-        </aside>}
-        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages} references={references}/>)}</div>
+        </details>}
+        <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages}/>)}</div>
       </section>)}
       {!filtered.length && (
         <div className="empty">
@@ -180,6 +184,7 @@ export function Originals({
           <button onClick={() => setQuery("")}>Limpiar búsqueda</button>
         </div>
       )}
+      <section className="shared-references">{references.length?<PurchaseReferences photos={references}/>:<Link href="/referencias">Consultar referencias de clientes →</Link>}</section>
     </>
   );
 }
@@ -187,12 +192,10 @@ function OriginalCard({
   product: p,
   products,
   packages = [],
-  references = [],
 }: {
   product: Original;
   products: Original[];
   packages?: Package[];
-  references?: {id:number;url:string}[];
 }) {
   const { lines, change } = useContext(Context);
   const quantity = lines.find((l) => l.id === -p.id)?.quantity || 0;
@@ -202,9 +205,10 @@ function OriginalCard({
   const inputId = useId();
   const max = Math.max(
     0,
-    Math.min(p.currentStock - quantity - lines.filter(l=>l.id>0).reduce((n,l)=>n+(packages.find(b=>b.id===l.id)?.items.filter(i=>i.productId===p.id&&!i.assorted).reduce((s,i)=>s+i.quantity,0)||0)*l.quantity,0), 100000 - quantity),
+    Math.min(p.currentStock - fixedPairsInCart(p.id,lines,packages), 100000 - quantity),
   );
   const valid =
+    !lines.some(line=>line.id>0&&!packages.some(item=>item.id===line.id)) &&
     !!p.rules.length &&
     Number.isInteger(amount) &&
     amount >= 1 &&
@@ -218,18 +222,8 @@ function OriginalCard({
     { id: -p.id, quantity: quantity + (valid ? amount : 0) },
   ], packages).find((g) => g.key === pricingKey(p));
   const proposedRow = proposed?.rows.find((l) => l.id === -p.id);
-  const nextTier = p.rules
-    .filter(
-      (r) =>
-        valid &&
-        proposedRow?.price != null &&
-        r.minQuantity > (proposed?.quantity || 0) &&
-        Number(r.pricePerUnit) < proposedRow.price,
-    )
-    .sort((a, b) => a.minQuantity - b.minQuantity)[0];
-  const prices = p.rules
-    .map((r) => Number(r.pricePerUnit))
-    .filter(Number.isFinite);
+  const nextTier=valid&&proposedRow?.price!=null?nextDiscount(p.rules,proposed?.quantity||0,proposedRow.price):null;
+  const lowest=lowestTier(p.rules);
   return (
     <article className="original-product">
       <div className="original-visual">
@@ -238,12 +232,13 @@ function OriginalCard({
         <span className={`original-stock ${p.currentStock ? "" : "sold-out"}`}>
           {p.currentStock ? `${p.currentStock} disponibles` : "Agotado"}
         </span>
-        <small>Ilustración de referencia</small>
+        {!p.imageUrl&&!p.imageUrls?.length&&<small>Ilustración de referencia</small>}
       </div>
       <div className="original-body">
         <div className="original-title">
+          <ProductViewEvent id={p.id} kind="product"/>
           <p className="original-meta">
-            {[p.gender, p.size].filter(Boolean).join(" · ")}
+            {[p.gender, p.details?.sizeRange||p.size].filter(Boolean).join(" · ")}
           </p>
           <span className="product-group-badge">
             Grupo {pricingName(p)}
@@ -251,22 +246,21 @@ function OriginalCard({
           <h2>{p.name}</h2>
         </div>
         <div className="original-price">
-          {prices.length ? (
+          {valid&&proposedRow?.price!=null ? (
             <>
-              <small>Desde</small>
-              <strong>{money(Math.min(...prices))}</strong>
+              <small>Tu precio al agregar</small>
+              <strong>{money(proposedRow.price)}</strong>
               <small>MXN / {unit}</small>
             </>
           ) : (
-            <small>Precio por configurar</small>
+            <small>Elige una cantidad disponible para calcular</small>
           )}
         </div>
         <div className="original-current" aria-live="polite">
 
           {valid && proposedRow?.price != null ? (
             <>
-              <b>En carrito: {quantity} {units}
-                <br></br> Precio por {unit} {money(proposedRow.price)} MXN</b>
+              <b>{amount} {amount===1?unit:units} por agregar · Subtotal {money(Math.round(proposedRow.price*100)*amount/100)}</b><small>IVA incluido · Envío aparte. Vista previa con tu carrito; verificamos antes de pagar.</small>
             </>
           ) : (
             <p>Ingresa una cantidad disponible para calcular.</p>
@@ -277,7 +271,8 @@ function OriginalCard({
             </small>
           )}
         </div>
-        <div className="original-tiers">
+        <details className="original-tiers"><summary>Ver descuentos y detalles del producto</summary>
+          {lowest&&<p>Desde {money(Number(lowest.pricePerUnit))} por {unit} al reunir {lowest.minQuantity} {units} de {pricingName(p)}{lowest.maxQuantity!=null&&lowest.maxQuantity!==2147483647?` (hasta ${lowest.maxQuantity})`:''}.</p>}
           <table>
             <caption>Tarifa resaltada: vista previa del grupo</caption>
             <thead>
@@ -309,10 +304,12 @@ function OriginalCard({
               ))}
             </tbody>
           </table>
-        </div>
+          <dl><dt>Talla del producto</dt><dd>{p.details?.sizeRange||p.size||'Rango pendiente de confirmar; consulta antes de comprar.'}</dd>{p.details?.material&&<><dt>Material</dt><dd>{p.details.material}</dd></>}{p.details?.height&&<><dt>Altura</dt><dd>{p.details.height}</dd></>}</dl>
         <p className="original-volume">
           {volumePricingMessage(p)}
         </p>
+        {p.details?.assortment&&<p>{p.details.assortment}</p>}
+        </details>
         <div className="original-purchase">
           <div className="original-quantity-row">
             <label htmlFor={inputId}>
@@ -347,21 +344,21 @@ function OriginalCard({
               {nextTier ? (
                 <>
                   <p>
-                    ¡Agrega {nextTier.minQuantity - (proposed?.quantity || 0)}{" "}
+                    Agrega {nextTier.missing}{" "}
                     {units} más del grupo <b>{pricingName(p)}</b> y
                     ahorra{" "}
                     <b>
-                      {money(proposedRow.price - Number(nextTier.pricePerUnit))}{" "}
+                      {money(nextTier.savingPerUnit)}{" "}
                       por {unit} de este modelo
                     </b>
-                    !
+                    .
                   </p>
                   <progress
                     value={proposed?.quantity || 0}
-                    max={nextTier.minQuantity}
+                    max={nextTier.quantity}
                     aria-label="Progreso hacia la siguiente tarifa"
                   />
-                  <small>Después de agregar la cantidad elegida.</small>
+                  <small>Próxima tarifa: {money(nextTier.price)} / {unit}. Sujeto a existencias.</small>
                 </>
               ) : (
                 <p>✓ Mejor tarifa disponible para este modelo.</p>
@@ -370,13 +367,13 @@ function OriginalCard({
           )}
           <button
             className="original-add"
-            disabled={!valid}
+            disabled={!valid||proposedRow?.price==null}
             onClick={() => change(-p.id, quantity + amount)}
           >
             {p.currentStock ? "Agregar a mi carrito" : "Sin disponibilidad"}
             <ArrowUpRight size={17} />
           </button>
-          <PurchaseReferences photos={references}/>
+          {!valid&&<p role="status">{max<1?'Sin existencias adicionales para agregar.':`Escribe entre 1 y ${max} ${units}.`}</p>}
           <p className="original-added" role="status">
             {quantity > 0 && (
               <>

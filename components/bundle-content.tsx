@@ -23,7 +23,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
           <tbody>
             {item.items.map((i, n) => (
               <tr key={i.id ?? n}>
-                <td>{i.name}{i.size?.trim()&&<small style={{display:'block'}}>Talla: {i.size}</small>}{i.assorted&&<small style={{display:'block'}}>Surtido de niño a adulto y todos los géneros, según existencias.</small>}</td>
+                <td>{i.assorted?'Surtido automático según existencias':i.name}{!i.assorted&&<small style={{display:'block'}}>Talla del calcetín: {i.size?.trim()||'rango pendiente de confirmar'}</small>}{i.assorted&&<small style={{display:'block'}}>Sin proporciones garantizadas por género o edad. Si personalizas, el contenido elegido aparece junto al selector y en tu carrito.</small>}</td>
                 <td>{i.quantity} {isShort(i)?'piezas':'pares'}{usesTripares(i)&&<small style={{display:'block'}}>{triparesLabel(i.quantity)}</small>}</td>
                 <td>
                   {i.assignedUnitPrice == null
@@ -47,7 +47,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
       <div>{bundleVolumeMessages(item).map(message=><p key={message}><small>{message}</small></p>)}</div>
       <div className="bundle-measures">
         <span>
-          Dimensiones
+          Dimensiones del embalaje (no talla)
           <br />
           <b>
             {[item.boxLengthCm, item.boxWidthCm, item.boxHeightCm].every(
@@ -58,7 +58,7 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
           </b>
         </span>
         <span>
-          Peso
+          Peso del paquete para envío
           <br />
           <b>
             {item.boxWeightKg == null

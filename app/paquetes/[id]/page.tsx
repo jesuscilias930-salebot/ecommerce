@@ -1,4 +1,6 @@
 import {PurchaseConfidence} from '@/components/store-trust';
+import {PurchaseTiming} from '@/components/purchase-timing';
+import {ProductViewEvent} from '@/components/product-view-event';
 import {BundleConfigurator} from '@/components/bundle-configurator';
 import {customizable} from '@/lib/bundle-selection';
 import {getOriginals,type Original} from '@/lib/product-catalog';
@@ -28,6 +30,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
   let variants:Original[]=[];let variantError:string|undefined;
   if(canCustomize)try{variants=await getOriginals();}catch{variantError='No pudimos cargar los géneros disponibles. Puedes elegir surtido o reintentar.';}
   return <main id="contenido" className={`section ${styles.detailPage}`}>
+    <ProductViewEvent id={item.id}/>
     {data.demo&&<p className="demo">Paquete de demostración · Contenido y precio ilustrativos</p>}
     <nav className={styles.breadcrumbs} aria-label="Ruta de navegación"><Link href="/">Inicio</Link><span aria-hidden="true">/</span><Link href="/paquetes">Paquetes</Link><span aria-hidden="true">/</span><span aria-current="page">{item.name}</span></nav>
     <div className={`${styles.detailLayout} ${canCustomize?styles.customizableLayout:''}`}>
@@ -46,20 +49,20 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
         <span className="eyebrow">CAJA DE MAYOREO · COMPRA COMO INVITADO</span><h1 id="bundle-title">{item.name}</h1>
         {canCustomize&&<BundleConfigurator item={item} products={variants} error={variantError}/>}
         {!canCustomize&&<><BundleDescription text={item.description}/>
-        <p className="detail-price">{money(item.price)} <small>MXN</small></p><p>Precio de referencia por caja · IVA incluido. Verás el costo de envío y el total antes de pagar.</p>
+        <p>El precio se calcula con la cantidad elegida y tu carrito. Verás el envío antes de pagar.</p>
         <dl className={styles.facts}><div><dt>Contenido por caja</dt><dd>{packageQuantityLabel(item)}</dd></div><div><dt>Promedio de referencia por unidad</dt><dd>{item.pieces>0?money(item.price/item.pieces):'—'}</dd></div></dl>
         <p className="stock">{item.available?`${item.available} cajas disponibles`:'Temporalmente agotado'}</p>
         <AddButton key={item.id} item={item} chooseQuantity/></>}
-        <PurchaseConfidence/>
+        <PurchaseTiming/><PurchaseConfidence/>
         {!canCustomize&&<TestimonialPhotos limit={2} compact/>}
       </section>
     </div>
     {canCustomize&&<section id="contenido-paquete" className={styles.content} aria-label="Detalles del paquete">
       <details><summary>Descripción y condiciones del surtido</summary><BundleDescription text={item.description}/><p>Los diseños y colores se envían según existencias. La combinación elegida se aplica a cada caja.</p></details>
-      <details><summary>Contenido, tallas y medidas</summary><BundleContent item={item} showHeading={false}/></details>
+      <details><summary>Contenido de referencia y medidas del embalaje</summary><BundleContent item={item} showHeading={false}/></details>
       <TestimonialPhotos limit={2} compact/>
     </section>}
     {related.length>0&&<section className={styles.content} aria-labelledby="related-title"><h2 id="related-title">Otras opciones para tu negocio</h2><p>Paquetes disponibles con productos en común o una inversión cercana. Compara el contenido antes de elegir.</p><div className="product-grid">{related.map(candidate=><Card key={candidate.id} item={candidate}/>)}</div><Link className="text-link" href="/paquetes">Comparar todos los paquetes →</Link></section>}
-    <div className={styles.mobilePurchase}><div><strong>{canCustomize?packageQuantityLabel(item):money(item.price)}</strong><small>{canCustomize?'Elige tu surtido':`${packageQuantityLabel(item)} · Más envío`}</small></div><a href="#comprar-paquete">{canCustomize?'Personalizar géneros ↑':'Elegir cantidad ↑'}</a></div>
+    <div className={styles.mobilePurchase}><div><strong>{packageQuantityLabel(item)}</strong><small>Consulta tu precio con el carrito</small></div><a href="#comprar-paquete">{canCustomize?'Elegir surtido ↑':'Elegir cantidad ↑'}</a></div>
   </main>;
 }

@@ -45,6 +45,7 @@
 .breadcrumbs{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:#6C7770;}
 .breadcrumbs span{overflow-wrap:anywhere;}
 .mobilePurchase{display:none;}
+:global(body:has(.floating-cart)) .mobilePurchase{position:static;box-shadow:none;margin-top:20px;}
 .quantity{display:grid;flex:1 0 100%;gap:8px;margin:12px 0;color:#183C32;}
 .quantity input{width:100%;padding:12px;border:1px solid #DEDFD6;border-radius:8px;background:white;}
 .quantity small{font-size:12px;color:#6C7770;}

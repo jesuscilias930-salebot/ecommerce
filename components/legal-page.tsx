@@ -3,6 +3,7 @@ import {legalBusiness,legalLinks,LEGAL_VERSION} from '@/lib/legal';
 import {storePolicies,SUPPORT_URL} from '@/lib/store-trust';
 import {CookiePreferences} from './cookie-preferences';
 import styles from './legal-page.module.css';
+import {BusinessContact} from './business-contact';
 
 export type LegalKind='privacy'|'terms'|'shipping'|'cookies';
 const titles={privacy:'Aviso de privacidad',terms:'Términos de compra',shipping:'Envíos, cambios y devoluciones',cookies:'Política de cookies'};
@@ -13,6 +14,8 @@ export function LegalPage({kind}:{kind:LegalKind}){
   <Link href="/">← Volver a la tienda</Link><h1>{titles[kind]}</h1><p>Merlyn Mayoreo · Versión {LEGAL_VERSION}</p>
   {incomplete&&<aside className={styles.notice}><strong>Datos del responsable por completar</strong><p>Aún falta publicar el domicilio del responsable. Solicita este dato a la tienda antes de comprar.</p></aside>}
   <nav aria-label="Información legal">{legalLinks.map(l=><Link key={l.href} href={l.href}>{l.label}</Link>)}</nav>
+  {kind!=='cookies'&&<BusinessContact/>}
+  {(kind==='privacy'||kind==='cookies')&&<section><h2>Medición opcional del recorrido de compra</h2><p>Con tu consentimiento publicitario también enviamos a Meta acciones de producto, configuración de cajas, agregado al carrito, inicio de pago, cotización y selección de envío, clic a WhatsApp y creación de pedidos pendientes. Compartimos únicamente identificadores de productos, cantidades, importes y tipo de acción; no los campos de tus formularios. Un pedido pendiente o clic a WhatsApp no equivale a una compra pagada.</p></section>}
   {kind==='privacy'&&<>
    <section><h2>1. Responsable y contacto</h2><p>Nombre legal: {legalBusiness.name}. Domicilio del responsable: {legalBusiness.address||'pendiente de publicación'}.</p><p>Correo para solicitudes de privacidad: <a href={'mailto:'+legalBusiness.privacyEmail}>{legalBusiness.privacyEmail}</a>.</p><Contact/></section>
    <section><h2>2. Datos y finalidades necesarias</h2><p>Para registrar, cobrar, preparar y entregar tu pedido tratamos los productos y cantidades elegidos, importe, identificador y estado del pedido y del pago; así como nombre, teléfono, correo y dirección de entrega cuando los proporcionas. También podemos tratar conversaciones de atención, incidencias y datos fiscales que solicites usar para facturación.</p><p>El navegador utiliza almacenamiento para conservar el carrito y recuperar intentos de compra. La infraestructura puede procesar datos técnicos de conexión para operar y proteger el servicio. No solicitamos datos personales sensibles para comprar. Los datos de tarjeta se introducen en Stripe, no en nuestros formularios ni por WhatsApp.</p></section>

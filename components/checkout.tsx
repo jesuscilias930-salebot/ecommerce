@@ -8,6 +8,7 @@ import {ShippingAddress,validateAddress} from '@/lib/shipping-address';
 import type {ShippingEstimate} from './cart-shipping';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
+import {trackStoreEvent} from '@/lib/store-events';
 
 type Receipt={body:string;folio:string;whatsappUrl:string;subtotal:number};
 const STORAGE_KEY='merlyn-pending-checkout-v1';
@@ -38,11 +39,13 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
   bundles:lines.filter(l=>l.id>0).map(l=>bundleInput({bundleId:l.id,quantity:l.quantity,selection:l.selection})).sort((a,b)=>a.bundleId-b.bundleId)
  });
  const current=receipt?.body===body?receipt:null;
+ useEffect(()=>{const send=()=>{if(addressPage&&lines.length)void trackStoreEvent('InitiateCheckout',{},`checkout:${body}`);};send();window.addEventListener('merlyn:analytics-ready',send);return()=>window.removeEventListener('merlyn:analytics-ready',send);},[addressPage,body,lines.length]);
  async function complete(payment: 'stripe' | 'whatsapp' = 'whatsapp') {
   if(payment==='stripe'&&!cardPaymentsEnabled)return;
   if(lock.current||blockedReason||!lines.length)return;
   if(current&&payment==='whatsapp'){window.location.assign(current.whatsappUrl);return;}
   lock.current=true;setBusy(true);setError('');
+  void trackStoreEvent('InitiateCheckout',{},`checkout:${body}`);
   try {
    // A WhatsApp fallback must keep the same order after an ambiguous Stripe attempt.
    let previous=attempt.current;
@@ -74,6 +77,7 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
    const url=new URL(data.whatsappUrl);
    if(url.protocol!=='https:'||url.hostname!=='wa.me'||url.pathname!=='/522721285563'||data.folio!=='MS-'+attempt.current.id.toLowerCase())throw Error('Respuesta de pedido inválida.');
    setReceipt({body,folio:data.folio,whatsappUrl:url.href,subtotal:Number(data.subtotal)});
+   await Promise.race([Promise.all([trackStoreEvent('PendingOrderCreated',{},`pending:${data.folio}`),trackStoreEvent('WhatsAppClick',{},`whatsapp:${data.folio}`)]),new Promise(resolve=>setTimeout(resolve,800))]);
    window.location.assign(url.href);
   }catch(e){setError(e instanceof Error&&e.name!=='TimeoutError'?e.message:'La respuesta tardó demasiado. Reintenta: se usará el mismo identificador.');}
   finally{lock.current=false;setBusy(false);}

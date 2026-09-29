@@ -11,7 +11,7 @@ const PIXEL_ID='2294997607982799';
 const CONSENT_KEY=MARKETING_CONSENT_KEY;
 type Consent='accepted'|'rejected';
 type Pixel=((...args:unknown[])=>void)&{callMethod?:(...args:unknown[])=>void;queue:unknown[][];push?:Pixel;loaded:boolean;version:string};
-declare global {interface Window {fbq?:Pixel;_fbq?:Pixel;}}
+declare global {interface Window {fbq?:Pixel;_fbq?:Pixel;merlynMetaReady?:boolean;}}
 let loading:Promise<void>|undefined;
 let initialized=false;
 function loadPixel(){
@@ -51,6 +51,7 @@ export function MetaPixel(){
   active.current=consent==='accepted'&&metaEnabled;
   // Never send checkout return URLs, which can contain payment-session identifiers.
   const sensitive=pathname.startsWith('/pago/')||[...new URLSearchParams(window.location.search).keys()].some(k=>/token|session|email|phone|address/i.test(k));
+  window.merlynMetaReady=false;
   if(!metaEnabled||consent!=='accepted'){window.fbq?.('consent','revoke');lastPage.current=null;return;}
   if(sensitive||!['tienda.merlyncilias.com','ecommerce-9w7o.onrender.com'].includes(window.location.hostname))return;
   let cancelled=false;
@@ -62,19 +63,21 @@ export function MetaPixel(){
     window.fbq?.('init',PIXEL_ID);initialized=true;
    }
    if(lastPage.current!==pathname){window.fbq?.('track','PageView');lastPage.current=pathname;}
+   window.merlynMetaReady=true;
+   window.dispatchEvent(new Event('merlyn:analytics-ready'));
   }).catch(()=>{/* Ad blockers or Meta outages must never prevent shopping. */});
-  return()=>{cancelled=true;};
+  return()=>{cancelled=true;window.merlynMetaReady=false;};
  },[consent,pathname,metaEnabled]);
  function choose(value:Consent){
   active.current=value==='accepted'&&metaEnabled;
-  if(!active.current)window.fbq?.('consent','revoke');
+  if(!active.current){window.merlynMetaReady=false;window.fbq?.('consent','revoke');}
   try{localStorage.setItem(CONSENT_KEY,value);}catch{}
   setConsent(value);setEditing(false);
  }
  return <>
   <button type="button" className={styles.settings} onClick={()=>setEditing(true)}>Preferencias de cookies</button>
   {ready&&(consent===null||editing)&&<section className={styles.banner} aria-label="Cookies publicitarias">
-   <div><strong>Tú decides sobre las cookies publicitarias</strong><p>Con tu permiso compartimos con Meta visitas y compras confirmadas, su importe y productos, junto con identificadores publicitarios y el tipo de navegador, para medir anuncios. No compartimos datos de tarjeta, dirección, correo ni teléfono. Puedes rechazarlo y comprar normalmente o cambiar tu elección en Preferencias de cookies antes de iniciar el pago.</p><a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer">Política de privacidad de Meta</a></div>
+   <div><strong>Tú decides sobre las cookies publicitarias</strong><p>Con tu permiso compartimos con Meta visitas, acciones de compra y compras confirmadas, productos e importes, identificadores publicitarios y tipo de navegador para medir anuncios. Las acciones incluyen configurar cajas, carrito, envío y continuar por WhatsApp; un pedido pendiente no es una compra pagada. No compartimos datos de tarjeta, dirección, correo ni teléfono. Puedes rechazarlo y comprar normalmente o cambiar tu elección en Preferencias de cookies antes de iniciar el pago.</p><a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer">Política de privacidad de Meta</a></div>
    <nav aria-label="Privacidad y cookies"><Link href="/privacidad">Aviso de privacidad</Link> · <Link href="/cookies">Política de cookies</Link></nav>
    <div className={styles.actions}><button type="button" onClick={()=>choose('rejected')}>Rechazar</button><button type="button" onClick={()=>choose('accepted')}>Aceptar cookies</button></div>
   </section>}

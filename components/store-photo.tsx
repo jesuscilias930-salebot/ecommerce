@@ -38,8 +38,8 @@ function PhotoGallery({photos,name,children,zoom,href}:{photos:string[];name:str
             onPointerCancel={()=>{dragged.current=true;pointerStart.current=null;}}
             onPointerUp={()=>{pointerStart.current=null;}}
             onClick={event=>{if(dragged.current&&event.detail!==0)event.preventDefault();dragged.current=false;}}>
-            {url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} draggable={false} loading="lazy" onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
-          </Link>:url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} draggable={false} loading="lazy" onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
+            {url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} width={640} height={640} decoding="async" draggable={false} loading={zoom&&i===0?'eager':'lazy'} onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
+          </Link>:url&&!failed.has(url)?<img src={url} alt={`${name}${multiple?` · Foto ${i+1}`:''}`} width={640} height={640} decoding="async" draggable={false} loading={zoom&&i===0?'eager':'lazy'} onError={()=>setFailed(current=>new Set(current).add(url))}/>:children}
         </div>
       </div>)}
     </div>

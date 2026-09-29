@@ -6,6 +6,8 @@ import {ShippingAddressForm} from './shipping-address-form';
 import styles from './cart-shipping.module.css';
 import {useRouter} from 'next/navigation';
 import {isAllowedShippingRate} from '@/lib/shipping-carriers';
+import {PurchaseTiming} from './purchase-timing';
+import {trackStoreEvent} from '@/lib/store-events';
 
 type Rate={carrier:string;service:string;description:string;deliveryEstimate:string;totalPrice:number;currency:string;token:string};
 type Quote={environment:'sandbox'|'production';rates:Rate[];expiresAt:string;parcel:{pairs:number;weightKg:number;lengthCm:number;widthCm:number;heightCm:number}};
@@ -45,14 +47,15 @@ export function CartShipping({cartKey,blocked,onSelect}:{cartKey:string;blocked?
   const timer=setTimeout(()=>{setQuote(null);setSelected(-1);callback.current(null);setError('La cotización venció. Calcula nuevamente para actualizar el precio.');},Math.max(0,Date.parse(quote.expiresAt)-Date.now()));
   return()=>clearTimeout(timer);
  },[quote]);
- function edit(value:ShippingAddress){if(JSON.stringify(value)===JSON.stringify(address))return;setAddress(value);setQuote(null);setSelected(-1);callback.current(null);setError('');try{sessionStorage.removeItem(selectionKey);sessionStorage.setItem(draftKey,JSON.stringify(value));}catch{}}
+ function edit(value:ShippingAddress){if(JSON.stringify(value)===JSON.stringify(address))return;abort.current?.abort();setBusy(false);setAddress(value);setQuote(null);setSelected(-1);callback.current(null);setError('');try{sessionStorage.removeItem(selectionKey);sessionStorage.setItem(draftKey,JSON.stringify(value));}catch{}}
  async function calculate(){
   if(busy||blocked)return;
   setError('');setQuote(null);setSelected(-1);callback.current(null);
   try{sessionStorage.removeItem(selectionKey);}catch{}
+  let controller:AbortController|undefined;
   try{
    const destination=validateAddress(address);
-   abort.current?.abort();const controller=new AbortController();abort.current=controller;
+   abort.current?.abort();controller=new AbortController();abort.current=controller;
    setBusy(true);
    const response=await fetch('/api/shipping-quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...JSON.parse(cartKey),destination}),signal:controller.signal});
    const data=await response.json();
@@ -61,11 +64,14 @@ export function CartShipping({cartKey,blocked,onSelect}:{cartKey:string;blocked?
    if(!['sandbox','production'].includes(data.environment)||!Array.isArray(data.rates)||!data.rates.length||!Number.isFinite(Date.parse(data.expiresAt))||Date.parse(data.expiresAt)<=Date.now()||data.rates.some((r:Rate)=>typeof r.token!=='string'||!r.token||r.currency!=='MXN'||!Number.isFinite(Number(r.totalPrice))||Number(r.totalPrice)<=0))throw Error('No recibimos tarifas válidas. Intenta nuevamente.');
    if(controller.signal.aborted)return;
    setAddress(destination);setQuote(data);setOpen(false);
-  }catch(e){if(e instanceof Error&&e.name!=='AbortError'){setError(e.message);setOpen(true);}}finally{setBusy(false);}
+   if(data.environment==='production')void trackStoreEvent('ShippingQuoted',{rateCount:data.rates.length},`shipping:${data.expiresAt}`);
+  }catch(e){if(!controller?.signal.aborted&&e instanceof Error&&e.name!=='AbortError'){setError(e.message);setOpen(true);}}finally{if(!controller||abort.current===controller)setBusy(false);}
  }
- function choose(index:number){if(!quote||Date.parse(quote.expiresAt)<=Date.now())return;const rate=quote.rates[index];if(!rate.token)return;setSelected(index);onSelect({price:Number(rate.totalPrice),test:quote.environment==='sandbox',expiresAt:quote.expiresAt,token:rate.token,address,carrier:rate.carrier,service:rate.service});try{sessionStorage.setItem(selectionKey,JSON.stringify({cartKey,quote,selected:index,address}));}catch{}}
+ function choose(index:number){if(!quote||Date.parse(quote.expiresAt)<=Date.now())return;const rate=quote.rates[index];if(!rate.token)return;if(quote.environment==='production')void trackStoreEvent('ShippingSelected',{value:Number(rate.totalPrice)},`rate:${quote.expiresAt}:${index}`);setSelected(index);onSelect({price:Number(rate.totalPrice),test:quote.environment==='sandbox',expiresAt:quote.expiresAt,token:rate.token,address,carrier:rate.carrier,service:rate.service});try{sessionStorage.setItem(selectionKey,JSON.stringify({cartKey,quote,selected:index,address}));}catch{}}
  return <section className={styles.card} aria-labelledby="cart-shipping-title">
   <h2 id="cart-shipping-title">{open?'Tu dirección de entrega':'Elige cómo recibirlo'}</h2>
+  <PurchaseTiming/>
+  {open&&<p>La integración actual necesita tu dirección completa y datos de contacto para obtener una tarifa válida para entrega. El código postal por sí solo no basta. No se genera una guía ni un cobro al cotizar.</p>}
   {blocked&&<p role="status" className={styles.notice}>{blocked} Puedes completar tu dirección mientras tanto.</p>}
    {!open&&<div className={styles.destination}><div><strong>{address.recipient}</strong><p>{address.street} {address.exteriorNumber}{address.interiorNumber?` · Interior ${address.interiorNumber}`:''}<br/>{address.district}, {address.city} · CP {address.postalCode}</p></div><button type="button" disabled={busy} onClick={()=>setOpen(true)} aria-expanded={open} aria-controls="cart-shipping-address">Editar dirección</button></div>}
    <div id="cart-shipping-address" hidden={!open}><ShippingAddressForm quoteMode value={address} onChange={edit} onContinue={()=>void calculate()} onBack={()=>router.push('/carrito')} busy={busy} blocked={!!blocked}/></div>

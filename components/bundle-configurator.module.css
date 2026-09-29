@@ -1,4 +1,5 @@
 .panel{display:grid;gap:14px;margin-top:16px}
+.modes{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}.modes legend{font-size:.85rem;margin-bottom:8px}.modes label{display:flex;align-items:center;gap:8px;border:1px solid #b7c9be;border-radius:10px;padding:10px;min-height:44px;font-size:.85rem;flex:1}.panel .modes input{width:18px;height:18px;min-height:18px;margin:0;accent-color:#315b48}.modes label:has(input:checked){background:#edf2df;border-color:#315b48}
 .panel h2{font-size:1.15rem!important;letter-spacing:-.02em;margin:6px 0 0}
 .panel p{margin:0!important;font-size:.9rem;line-height:1.5}
 .price{display:grid;gap:5px;padding-bottom:16px;border-bottom:1px solid #dce3df}
