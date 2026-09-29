@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { packageQuantityLabel,isShort } from "@/lib/sale-presentation";
-import { bundleVolumeMessages } from "@/lib/live-pricing";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback, useRef } from "react";
 import {useCartQuote} from './use-cart-quote';
 import {QuantityInput} from './quantity-input';
@@ -243,7 +242,7 @@ export function Card({ item }: { item: Package }) {
         <small>
           Referencia por caja · IVA incluido · Envío aparte{item.pieces>0?` · Promedio ${money(item.price/item.pieces)} por ${item.items.every(i=>!isShort(i))?'par':'unidad'}`:''}.
         </small>
-        <details className="card-pricing-help"><summary>Precio por volumen</summary>{bundleVolumeMessages(item).map(message=><p key={message}>{message}</p>)}</details>
+        <small>Tu precio se ajusta al combinar productos en el carrito.</small>
         <AddButton item={item} />
       </div>
     </article>

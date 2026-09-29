@@ -12,6 +12,7 @@ import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {getCatalog} from '@/lib/catalog';
 import {money} from '@/lib/money';
+import {bundleVolumeMessages} from '@/lib/live-pricing';
 import {AddButton, Card} from '@/components/shop';
 import {relatedPackages} from '@/lib/shopping-discovery';
 import styles from '@/components/shopping-discovery.module.css';
@@ -39,6 +40,7 @@ export default async function Page({params}:{params:Promise<{id:string}>}) {
         <nav className={styles.jumpLinks} aria-label="Información del paquete"><a href="#contenido-paquete">Qué incluye</a><a href="#dudas-paquete">Envío y compra</a><Link href="/referencias">Referencias de clientes</Link></nav>
         {!canCustomize&&<section id="contenido-paquete" className={styles.content} aria-labelledby="content-title"><h2 id="content-title">Todo lo que incluye tu caja</h2><BundleContent item={item} showHeading={false}/><p className="fine-print">Consulta las tallas registradas en el desglose y las condiciones de surtido en la descripción. La fotografía no garantiza diseños o colores distintos de los expresamente ofrecidos.</p></section>}
         <section id="dudas-paquete" className={styles.content} aria-labelledby="questions-title"><h2 id="questions-title">Resuelve tus dudas antes de comprar</h2>
+          <details><summary>Cómo se calcula tu precio</summary>{bundleVolumeMessages(item).map(message=><p key={message}>{message}</p>)}</details>
           <details><summary>¿Cuánto pagaré de envío?</summary><p>El envío no está incluido en el precio de la caja. Al continuar al checkout, completa tu dirección para ver las opciones disponibles y elegir una antes del pago.</p></details>
           <details><summary>¿Necesito registrarme?</summary><p>No. Puedes preparar tu pedido como invitado. También puedes concluirlo por WhatsApp y recibir atención para coordinar tu compra.</p></details>
           <details><summary>¿Puedo elegir las tallas y los diseños?</summary><p>Consulta las tallas registradas en el desglose y las condiciones de la descripción. Los artículos marcados como surtidos se preparan según existencias; no se garantiza un diseño o color específico salvo que se indique expresamente. Si necesitas una selección especial o falta un dato, consulta con un asesor.</p><Link href="/ayuda#contacto">Consultar con un asesor →</Link></details>

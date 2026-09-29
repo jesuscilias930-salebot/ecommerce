@@ -1,6 +1,5 @@
 import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
-import {bundleVolumeMessages} from '@/lib/live-pricing';
 import {packageQuantityLabel,isShort,usesTripares,triparesLabel} from '@/lib/sale-presentation';
 
 export function BundleContent({ item, showHeading = true }: { item: Package; showHeading?: boolean }) {
@@ -44,7 +43,6 @@ export function BundleContent({ item, showHeading = true }: { item: Package; sho
         <span>Referencia por una caja</span>
         <strong>{money(item.price)} MXN</strong>
       </div>
-      <div>{bundleVolumeMessages(item).map(message=><p key={message}><small>{message}</small></p>)}</div>
       <div className="bundle-measures">
         <span>
           Dimensiones del embalaje (no talla)
