@@ -9,6 +9,9 @@
 .panel .stepper input{width:56px;border:0;border-radius:0;text-align:center;padding:6px;appearance:textfield;-moz-appearance:textfield}
 .stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .panel input{width:76px;min-height:44px;padding:8px;border:1px solid #b7c9be;border-radius:8px;background:white;color:#183d2d}
+.assorted{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:.9rem}
+.panel .assorted input{width:20px;height:20px;min-height:20px;padding:0;accent-color:#315b48;flex-shrink:0}
+.stepper input:disabled{background:#f3f6f3;color:#7e8c84;cursor:not-allowed}
 .panel button:disabled{opacity:.45;cursor:not-allowed}.panel button:focus-visible,.panel input:focus-visible{outline:3px solid #6e9b83;outline-offset:-3px}
 .note{color:#53635a;font-size:.8rem!important}.amount{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.9rem}
 .progress{display:grid;gap:8px;font-size:.85rem}.progress progress{width:100%;accent-color:#315b48;height:7px}

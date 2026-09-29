@@ -41,14 +41,15 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
   </div>
   <h2 id="choose-box-title">Personalizar géneros</h2>
   <p>Elige cómo repartir tus {total} pares o deja que armemos tu surtido.</p>
+  <label className={styles.assorted}><input type="checkbox" checked={mode==='assorted'} onChange={e=>{setMode(e.target.checked?'assorted':'custom');setCounts({});setAdded(false);}}/>Quiero mi pedido surtido</label>
   {error&&<p role="alert">{error} <button type="button" onClick={()=>window.location.reload()}>Reintentar</button></p>}
   <div className={styles.mix}>
    {candidates.map(p=>{const label=`${genderName(p.gender||'Sin género')}${p.size?` · ${p.size}`:''}`;return <div className={styles.row} key={p.id}>
     <label htmlFor={`gender-${item.id}-${p.id}`}>{label}</label>
     <div className={styles.stepper}>
-     <button type="button" aria-label={`Quitar un par de ${label}`} disabled={!!error||!(counts[p.id]>0)} onClick={()=>updateCount(p.id,(counts[p.id]||0)-1)}>−</button>
-     <QuantityInput id={`gender-${item.id}-${p.id}`} disabled={!!error} min={0} max={total} placeholder="—" aria-label={`Pares de ${label} por caja`} value={mode==='assorted'?'':counts[p.id]||0} onChange={e=>updateCount(p.id,Number(e.target.value))}/>
-     <button type="button" aria-label={`Agregar un par de ${label}`} disabled={!!error||selected>=total} onClick={()=>updateCount(p.id,(counts[p.id]||0)+1)}>+</button>
+     <button type="button" aria-label={`Quitar un par de ${label}`} disabled={mode==='assorted'||!!error||!(counts[p.id]>0)} onClick={()=>updateCount(p.id,(counts[p.id]||0)-1)}>−</button>
+     <QuantityInput id={`gender-${item.id}-${p.id}`} disabled={mode==='assorted'||!!error} min={0} max={total} placeholder="—" aria-label={`Pares de ${label} por caja`} value={mode==='assorted'?'':counts[p.id]||0} onChange={e=>updateCount(p.id,Number(e.target.value))}/>
+     <button type="button" aria-label={`Agregar un par de ${label}`} disabled={mode==='assorted'||!!error||selected>=total} onClick={()=>updateCount(p.id,(counts[p.id]||0)+1)}>+</button>
     </div>
    </div>;})}
    {selection.some(s=>!candidates.some(p=>p.id===s.productId))&&<p role="alert">Una variante de tu selección ya no está disponible. <button type="button" onClick={()=>setCounts({})}>Elegir otra combinación</button></p>}
