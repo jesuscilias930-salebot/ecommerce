@@ -11,7 +11,6 @@ import { Context } from "./shop";
 import type { Package } from "@/lib/catalog";
 import type { Original } from "@/lib/product-catalog";
 import { pricingKey, pricingName } from "@/lib/live-pricing";
-import { CategorySavings } from "./category-savings";
 import { money } from "@/lib/money";
 import "./order-cart.css";
 export function VolumeCart({
@@ -98,7 +97,6 @@ export function VolumeCart({
           </div>)}
           <div className="order-group-total"><span>Individuales de este grupo · {g.quantity} unidades</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
         </article>)}
-        {!addressPage && quote && <details className="cart-pricing-details"><summary>Cómo se calculan tus precios por volumen{quote.savings != null && quote.savings > 0 ? ` · Ahorras ${money(quote.savings)}` : ""}</summary><p>Solo es una explicación del precio. Tus artículos siguen siendo los paquetes y productos mostrados arriba.</p><CategorySavings quote={quote}/></details>}
         {showAddress && lines.length > 0 && <CartShipping key={shippingKey} cartKey={shippingKey} blocked={blockedReason} onSelect={estimate => setShipping({key: shippingKey, estimate})}/>}
       </section>
       {lines.length > 0 && <aside className="order-summary">
