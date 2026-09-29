@@ -1,7 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {customizable,cleanSelection,validSelection,bundleInput,selectionKey} from '../lib/bundle-selection.ts';
+import {customizable,cleanSelection,validSelection,bundleInput,selectionKey,cartLineKey,cartCount,setCartQuantity} from '../lib/bundle-selection.ts';
 import {calculateGroups} from '../lib/live-pricing.ts';
+
+test('assorted and personalized boxes coexist and quantities change independently',()=>{
+ const selection=[{productId:1,quantity:20},{productId:2,quantity:30}];
+ let lines=setCartQuantity([],10,1,selection);
+ lines=setCartQuantity(lines,10,2);
+ assert.equal(lines.length,2);assert.equal(cartCount(lines),3);
+ assert.notEqual(cartLineKey(lines[0]),cartLineKey(lines[1]));
+ lines=setCartQuantity(lines,10,3,[...selection].reverse());
+ assert.equal(lines.length,2);assert.equal(lines[0].quantity,3);assert.equal(lines[1].quantity,2);
+ lines=setCartQuantity(lines,10,0);
+ assert.equal(lines.length,1);assert.deepEqual(lines[0].selection,selection);
+ assert.equal(cartCount([...lines,{id:-1,quantity:100}]),4);
+});
 
 test('only fully assorted caricatura packages can be customized',()=>{
  const part={assorted:true,categoryId:1,category:'Caricatura'};

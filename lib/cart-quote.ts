@@ -3,7 +3,7 @@ import type {Package} from './catalog';
 import {bundleInput,validSelection,type Selection,type CartLine} from './bundle-selection';
 import {pricingKey,pricingName} from './live-pricing';
 export type CartComponent={productId:number;name:string;categoryKey:string;categoryName:string;quantity:number;perUnitQuantity:number;groupQuantity:number;unitPrice:number;subtotal:number};
-export type CartQuoteLine={kind:'PRODUCT'|'BUNDLE';itemId:number;name:string;quantity:number;unitPrice:number;subtotal:number;components:CartComponent[];referenceSubtotal:number|null;savings:number|null};
+export type CartQuoteLine={kind:'PRODUCT'|'BUNDLE';itemId:number;name:string;quantity:number;unitPrice:number;subtotal:number;components:CartComponent[];referenceSubtotal:number|null;savings:number|null;selection?:Selection|null};
 export type CartQuote={demo?:boolean;lines:CartQuoteLine[];groups:{key:string;name:string;quantity:number;bundlePairs:number;individualPairs:number;subtotal:number}[];totalPairs:number;subtotal:number;savings:number|null};
 export type CartInput={products:{productId:number;quantity:number}[];bundles:{bundleId:number;quantity:number;selection?:Selection}[]};
 export const cartInput=(lines:CartLine[]):CartInput=>({products:lines.filter(l=>l.id<0).map(l=>({productId:-l.id,quantity:l.quantity})),bundles:lines.filter(l=>l.id>0).map(l=>bundleInput({bundleId:l.id,quantity:l.quantity,selection:l.selection}))});

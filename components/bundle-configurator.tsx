@@ -12,7 +12,7 @@ import styles from './bundle-configurator.module.css';
 
 const genderName=(gender:string)=>({Hombre:'Caballero',Mujer:'Dama'}[gender]||gender);
 export function BundleConfigurator({item,products,error}:{item:Package;products:Original[];error?:string}){
- const {lines}=useContext(Context),saved=lines.find(l=>l.id===item.id);
+ const {lines}=useContext(Context),saved=lines.find(l=>l.id===item.id&&l.selection)||lines.find(l=>l.id===item.id);
  return <Editor key={`${item.id}:${saved?.quantity||0}:${selectionKey(saved?.selection)}`} item={item} products={products} error={error} saved={saved}/>;
 }
 function Editor({item,products,error,saved}:{item:Package;products:Original[];error?:string;saved?:CartLine}){
@@ -28,8 +28,8 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
  const amountValid=Number.isInteger(amount)&&amount>=1&&amount<=99;
  const valid=amountValid&&(mode==='assorted'||(!error&&selected===total&&selection.length>0&&selection.every(s=>Number.isInteger(s.quantity)&&s.quantity>0&&!!candidates.find(p=>p.id===s.productId))));
  const proposed:CartLine={id:item.id,quantity:amount,...(mode==='assorted'?{}:{selection})};
- const preview=useCartQuote(valid?[...lines.filter(l=>l.id!==item.id),proposed]:[],valid);
- const box=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
+ const preview=useCartQuote(valid?[...lines.filter(l=>l.id!==item.id||!!l.selection!==!!proposed.selection),proposed]:[],valid);
+ const box=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id&&selectionKey(l.selection??undefined)===selectionKey(proposed.selection));
  function updateCount(id:number,value:number){
   setCounts(v=>({...v,[id]:Number.isFinite(value)?Math.max(0,Math.min(total,Math.trunc(value))):0}));
   setMode('custom');setAdded(false);
@@ -56,7 +56,7 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
   </div>
   {mode==='assorted'?<p className={styles.note} role="status">Surtido automático · {total} pares. Nosotros elegimos la mezcla.</p>:<div className={styles.progress} role="status"><strong>{selected} de {total} pares · {selected===total?'Caja completa':selected<total?`Faltan ${total-selected}`:`Quita ${selected-total}`}</strong><progress max={total} value={Math.min(selected,total)}/><button type="button" className={styles.reset} onClick={()=>{setMode('assorted');setCounts({});setAdded(false);}}>Restablecer a surtido</button></div>}
   <label className={styles.amount}>Cantidad de cajas<QuantityInput min={1} max={99} value={amount} onChange={e=>{setAmount(Number(e.target.value));setAdded(false);}}/></label>
-  {saved&&<p className={styles.note}>Ya tienes {saved.quantity} {saved.quantity===1?'caja':'cajas'} de este paquete. Al guardar se reemplazarán por esta cantidad y combinación.</p>}
+  {saved&&<p className={styles.note}>Guardar actualiza las cajas de esta modalidad. Las surtidas y las personalizadas se conservan por separado.</p>}
   <div className={styles.status} aria-live="polite">
    {valid?(box?(amount>1?<p>Total de {amount} cajas: <strong>{money(box.subtotal)}</strong></p>:null):preview.quoteError?<><p>{preview.quoteError}</p><button type="button" onClick={preview.retryQuote}>Reintentar precio y existencias</button></>:<p>Verificando precio y existencias…</p>):!amountValid?<p>Elige de 1 a 99 cajas.</p>:null}
   </div>

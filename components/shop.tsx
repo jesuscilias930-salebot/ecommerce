@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useState, useTransition, useCallb
 import {useCartQuote} from './use-cart-quote';
 import {QuantityInput} from './quantity-input';
 import type {CartQuote} from '@/lib/cart-quote';
-import {validSelection,cleanSelection,customizable,type CartLine,type Selection} from '@/lib/bundle-selection';
+import {validSelection,cleanSelection,customizable,cartLineKey,cartCount,setCartQuantity,type CartLine,type Selection} from '@/lib/bundle-selection';
 import {completedCart,CHECKOUT_ATTEMPT_KEY} from '@/lib/completed-cart';
 import {
   ShoppingBag,
@@ -34,10 +34,11 @@ export const Context = createContext<{
   quote?:CartQuote;
   quoteError?:string;
   retryQuote:()=>void;
-  change: (id: number, n: number) => void;
+  change: (id: number, n: number,selection?:Selection) => void;
+  addAssorted:(id:number,max:number)=>void;
   configureBundle:(id:number,n:number,selection?:Selection)=>void;
   completePurchase: (folio:string) => void;
-}>({retryQuote:()=>{}, lines: [], change: () => {},configureBundle:()=>{}, completePurchase:()=>{} });
+}>({retryQuote:()=>{}, lines: [], change: () => {},addAssorted:()=>{},configureBundle:()=>{}, completePurchase:()=>{} });
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [ready, setReady] = useState(false);
@@ -48,7 +49,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       if (Array.isArray(saved))
         setLines(
           Array.from(
-            new Map<number, Line>(
+            new Map<string, Line>(
               saved
                 .filter(
                   (l) =>
@@ -60,7 +61,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
                     l.quantity > 0,
                 )
                 .map((l) => [
-                  l.id,
+                  cartLineKey(l),
                   { id: l.id, quantity: Math.min(l.quantity, 100000), ...(l.selection?{selection:cleanSelection(l.selection)}:{}) },
                 ]),
             ).values(),
@@ -87,25 +88,26 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       setLines(remaining);
     }catch{}
   },[lines,ready]);
-  function change(id: number, n: number) {
+  function change(id: number, n: number,selection?:Selection) {
     if (!Number.isInteger(n)) return;
-    setLines((old) =>
-      n <= 0
-        ? old.filter((l) => l.id !== id)
-        : old.some((l) => l.id === id)
-          ? old.map((l) =>
-              l.id === id ? { ...l, quantity: Math.min(n, 100000) } : l,
-            )
-          : [...old, { id, quantity: Math.min(n, 100000) }],
-    );
+    setLines(old=>setCartQuantity(old,id,n,selection));
   }
+  function addAssorted(id:number,max:number){setLines(old=>{
+    if(old.filter(l=>l.id===id).reduce((n,l)=>n+l.quantity,0)>=Math.min(99,max))return old;
+    return setCartQuantity(old,id,(old.find(l=>l.id===id&&!l.selection)?.quantity||0)+1);
+  });}
   function configureBundle(id:number,n:number,selection?:Selection){
     if(!Number.isInteger(id)||id<=0||!Number.isInteger(n)||n<1||n>99||!validSelection(selection))return;
-    setLines(old=>[...old.filter(l=>l.id!==id),{id,quantity:n,...(selection?{selection:cleanSelection(selection)}:{})}]);
+    setLines(old=>[...old.filter(l=>l.id!==id||!!l.selection!==!!selection),{id,quantity:n,...(selection?{selection:cleanSelection(selection)}:{})}]);
   }
   return (
-    <Context.Provider value={{ lines, change,configureBundle, completePurchase,...pricing }}>{children}</Context.Provider>
+    <Context.Provider value={{ lines, change,addAssorted,configureBundle, completePurchase,...pricing }}>{children}<FloatingCart/></Context.Provider>
   );
+}
+function FloatingCart(){
+ const {lines}=useContext(Context),pathname=usePathname(),count=cartCount(lines);
+ if(!count||!['/','/paquetes','/productos'].includes(pathname)&&!pathname.startsWith('/paquetes/'))return null;
+ return <Link className="floating-cart" href="/carrito" aria-label={`Ir al carrito, ${count} cajas y productos`}><ShoppingBag size={23}/><span>Ver carrito</span><b aria-live="polite">{count}</b></Link>;
 }
 export function Header() {
   const pathname=usePathname();
@@ -132,10 +134,10 @@ export function Header() {
           <Link href="/productos">Productos individuales</Link>
           <Link href="/#preguntas">Preguntas frecuentes</Link>
         </nav>
-        <Link className="bag" href="/carrito" aria-label={`Ver carrito, ${lines.reduce((n, l) => n + l.quantity, 0)} artículos`} onClick={() => setMenuOpen(false)}>
+        <Link className="bag" href="/carrito" aria-label={`Ver carrito, ${cartCount(lines)} cajas y productos`} onClick={() => setMenuOpen(false)}>
           <ShoppingBag size={20} />
           <span>Carrito</span>
-          <b>{lines.reduce((n, l) => n + l.quantity, 0)}</b>
+          <b>{cartCount(lines)}</b>
         </Link>
       </header>
       <div className={discovery.searchBar}>
@@ -151,7 +153,7 @@ export function Header() {
 }
 export function AddButton({ item, chooseQuantity = false }: { item: Package; chooseQuantity?: boolean }) {
   const router = useRouter();
-  const { lines, change } = useContext(Context);
+  const { lines, change,addAssorted } = useContext(Context);
   const [added, setAdded] = useState(false);
   const [amount, setAmount] = useState(1);
   const quantity = lines.find((l) => l.id === item.id)?.quantity || 0;
@@ -160,7 +162,11 @@ export function AddButton({ item, chooseQuantity = false }: { item: Package; cho
   const review = chooseQuantity && added && quantity > 0;
   const preview=useCartQuote([...lines.filter(l=>l.id!==item.id),{id:item.id,quantity:quantity+amount}],chooseQuantity&&valid&&!review);
   const quotedBox=preview.quote?.lines.find(l=>l.kind==='BUNDLE'&&l.itemId===item.id);
-  if(customizable(item))return <Link className="primary" href={`/paquetes/${item.id}#comprar-paquete`}>Personalizar géneros <ArrowRight size={18}/></Link>;
+  if(customizable(item))return <div className="bundle-purchase-actions">
+    <Link className="text-link" href={`/paquetes/${item.id}#comprar-paquete`}>Personalizar géneros <ArrowRight size={18}/></Link>
+    <button type="button" className="primary" disabled={!item.available||lines.filter(l=>l.id===item.id).reduce((n,l)=>n+l.quantity,0)>=Math.min(99,item.available)} onClick={()=>{addAssorted(item.id,item.available);setAdded(true);}}>{item.available?'Agregar caja surtida al carrito':'Agotado'} <Plus size={18}/></button>
+    {added&&<p role="status" className="success">Caja surtida agregada. <Link href="/carrito">Ver carrito →</Link></p>}
+  </div>;
   return (
     <div className="bundle-purchase-actions">
       {chooseQuantity && <label className={discovery.quantity}>Cajas para agregar

@@ -46,7 +46,7 @@ export function CartBundle({ id, quantity,selection, item, quote, products = [],
     </div>
     <div className="cart-bundle-contents">
       <h4>Todo esto viene en tu paquete</h4>
-      {item&&customizable(item)&&<p>{selection?'Combinación elegida por ti.':'Surtido según existencias.'} <Link href={`/paquetes/${id}#comprar-paquete`}>Cambiar combinación →</Link></p>}
+      {item&&customizable(item)&&<p>{selection?'Combinación elegida por ti.':'Surtido según existencias.'} {selection&&<Link href={`/paquetes/${id}#comprar-paquete`}>Cambiar combinación →</Link>}</p>}
       <p>{units > 0 ? `${units} unidades en ${quantity === 1 ? "esta caja" : `estas ${quantity} cajas`}. ` : ""}No son productos comprados por separado.</p>
       {presentation && <div className="cart-tripar-summary"><strong>{units} pares de calcetines</strong><span>Presentación: {presentation}</span></div>}
       {contents.length > 0 ? <ul>{contents.map(part => <li key={part.key}>

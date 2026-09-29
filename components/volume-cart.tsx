@@ -1,5 +1,6 @@
 "use client";
 import {cartInput} from '@/lib/cart-quote';
+import {cartLineKey,selectionKey} from '@/lib/bundle-selection';
 import { Checkout } from "./checkout";
 import { CartShipping, type ShippingEstimate } from "./cart-shipping";
 import { CartQuantity } from "./cart-quantity";
@@ -65,7 +66,7 @@ export function VolumeCart({
   });
   const boxes = lines
     .filter((l) => l.id > 0)
-    .map((l) => ({ ...l, item: items.find((p) => p.id === l.id), q: quote?.lines.find(q=>q.kind==="BUNDLE"&&q.itemId===l.id) }));
+    .map((l) => ({ ...l, item: items.find((p) => p.id === l.id), q: quote?.lines.find(q=>q.kind==="BUNDLE"&&q.itemId===l.id&&selectionKey(q.selection??undefined)===selectionKey(l.selection)) }));
   const valid = lines.length > 0 && !!quote && !error;
   const total = valid ? Number(quote!.subtotal) : null;
   const demoOrder = !!quote?.demo || (demo && boxes.length > 0);
@@ -83,7 +84,7 @@ export function VolumeCart({
           {quoteError ? <>{quoteError}<button onClick={retryQuote}>Reintentar</button></> : "Actualizando precios y existencias…"}
         </div>}
         {!addressPage && boxes.length > 0 && <div className="cart-section-heading"><h2>Tus paquetes</h2><p>Cada tarjeta es un paquete completo. Cambia la cantidad de cajas para ajustar todo su contenido.</p></div>}
-        {!addressPage && boxes.map(l => <CartBundle key={l.id} id={l.id} quantity={l.quantity} selection={l.selection} item={l.item} quote={l.q} products={products} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity)}/>)}
+        {!addressPage && boxes.map(l => <CartBundle key={cartLineKey(l)} id={l.id} quantity={l.quantity} selection={l.selection} item={l.item} quote={l.q} products={products} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity,l.selection)}/>)}
         {!addressPage && groups.length > 0 && <div className="cart-section-heading"><h2>Tus productos individuales</h2><p>Estos artículos se agregaron por separado y no forman parte de los paquetes de arriba.</p></div>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
           <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>
@@ -103,7 +104,7 @@ export function VolumeCart({
         <span className="order-kind">Tu compra, en resumen</span><h2>Resumen del pedido</h2>
         {demoOrder && <p role="status">Demostración: estos artículos no generan pedidos reales.</p>}
         <details className="summary-items"><summary>{lines.length} {lines.length === 1 ? "artículo" : "artículos"} · Ver detalle</summary>
-          <ul>{selected.map(l => <li key={l.id}><span>{l.quantity} unidades · {l.name}</span><b>{l.q ? money(Number(l.q.subtotal)) : "—"}</b></li>)}{boxes.map(l => <li key={l.id}><span>{l.quantity} × {l.item?.name || "Caja no disponible"}</span><b>{l.q ? money(l.q.subtotal) : "—"}</b></li>)}</ul>
+          <ul>{selected.map(l => <li key={l.id}><span>{l.quantity} unidades · {l.name}</span><b>{l.q ? money(Number(l.q.subtotal)) : "—"}</b></li>)}{boxes.map(l => <li key={cartLineKey(l)}><span>{l.quantity} × {l.item?.name || "Caja no disponible"}{l.selection?' · Personalizada':''}</span><b>{l.q ? money(l.q.subtotal) : "—"}</b></li>)}</ul>
         </details>
         <div><span>Cajas e individuales · {quote?.totalPairs ?? "—"} unidades</span><b>{total === null ? "Calculando…" : money(total)}</b></div>
         <div><span>Envío</span><span>{addressPage ? estimate ? money(estimate.price) : "Elige una tarifa" : "En el siguiente paso"}</span></div>

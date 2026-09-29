@@ -12,3 +12,11 @@ export function cleanSelection(value:unknown):Selection|undefined {
 export function bundleInput(b:{bundleId:number;quantity:number;selection?:Selection}){return {bundleId:b.bundleId,quantity:b.quantity,...(b.selection!==undefined?{selection:cleanSelection(b.selection)}:{})};}
 export function customizable(item:Package){return item.items.length>0&&item.items.every(i=>i.assorted&&i.categoryId!=null&&i.categoryId===item.items[0].categoryId&&/caricatura/i.test(i.category||''));}
 export const selectionKey=(value?:Selection)=>JSON.stringify(cleanSelection(value)||null);
+export const cartLineKey=(line:CartLine)=>`${line.id}:${selectionKey(line.selection)}`;
+export const cartCount=(lines:CartLine[])=>lines.reduce((n,l)=>n+(l.id>0?l.quantity:1),0);
+export function setCartQuantity(lines:CartLine[],id:number,quantity:number,selection?:Selection){
+ const key=cartLineKey({id,quantity,selection});
+ if(quantity<=0)return lines.filter(l=>cartLineKey(l)!==key);
+ const next={id,quantity:Math.min(quantity,100000),...(selection?{selection:cleanSelection(selection)}:{})};
+ return lines.some(l=>cartLineKey(l)===key)?lines.map(l=>cartLineKey(l)===key?next:l):[...lines,next];
+}

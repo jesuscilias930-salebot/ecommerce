@@ -4,7 +4,9 @@ Se habilita automáticamente para paquetes compuestos íntegramente por artícul
 
 En el detalle: Surtido según existencias, opciones de género con stock y Elegir mi combinación. Las tallas y géneros proceden del inventario. La suma debe completar los pares por caja. Diseños y colores siguen sujetos a existencias. Precio y stock se verifican en SockControl antes de guardar y nuevamente antes del pago.
 
-El carrito conserva una combinación por paquete: al editarlo se reemplazan explícitamente su cantidad y mezcla. Varias cajas del mismo paquete tienen la misma combinación. El desglose queda guardado en Pedidos para prepararlo, sin cambiar el bundle original. No se descuenta inventario al agregarlo al carrito o crear un pedido pendiente.
+Desde el catálogo se puede agregar una caja surtida directamente o abrir Personalizar géneros. El carrito conserva por separado las cajas surtidas y una combinación personalizada de cada paquete; editar una modalidad no elimina la otra. Precio y existencias consideran ambas conjuntamente. El desglose queda guardado por línea en Pedidos, sin cambiar el bundle original. No se descuenta inventario al agregarlo al carrito o crear un pedido pendiente. El acceso flotante aparece con un carrito no vacío y cuenta cajas y líneas de productos individuales, no pares.
+
+Para esta mejora desplegar primero SockControl, que devuelve `selection` por línea en la cotización, y después ecommerce. No requiere otra migración.
 
 ## Despliegue
 
