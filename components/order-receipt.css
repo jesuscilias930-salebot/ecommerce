@@ -1,0 +1,5 @@
+.order-receipt{border-top:1px dashed #c9d2c6;border-bottom:1px dashed #c9d2c6;margin:16px 0;padding:4px 0}
+.order-receipt>ul{list-style:none;padding:0;margin:0}.receipt-line{padding:15px 0}.receipt-line+.receipt-line{border-top:1px solid #edf0e8}
+.receipt-line-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;font-size:13px;line-height:1.5}.receipt-line-heading strong{font-weight:600;overflow-wrap:anywhere}.receipt-line-heading b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.receipt-line>small{display:block;color:#59665c;font-size:12px;margin-top:5px;line-height:1.6}.receipt-contents{margin-top:8px;font-size:12px}.receipt-contents summary{cursor:pointer;color:#316345;padding:5px 0}.receipt-contents ul{padding-left:16px;margin:8px 0;color:#59665c}.receipt-contents li{margin:7px 0;line-height:1.5}
+.cart-selection-label{font-size:13px;color:#59665c}.order-cart .order-summary .order-final{border-top:2px solid #244f3b;gap:12px}.order-cart .order-summary .order-final b{font-size:clamp(20px,2.5vw,26px);overflow-wrap:anywhere}

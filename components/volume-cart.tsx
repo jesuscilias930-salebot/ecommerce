@@ -13,7 +13,9 @@ import type { Package } from "@/lib/catalog";
 import type { Original } from "@/lib/product-catalog";
 import { pricingKey, pricingName } from "@/lib/live-pricing";
 import { money } from "@/lib/money";
+import {isShort,usesTripares,triparesLabel} from '@/lib/sale-presentation';
 import "./order-cart.css";
+import "./order-receipt.css";
 export function VolumeCart({
   items,
   products = [],
@@ -83,8 +85,8 @@ export function VolumeCart({
         {lines.length > 0 && !quote && <div className="order-notice" role="status">
           {quoteError ? <>{quoteError}<button onClick={retryQuote}>Reintentar</button></> : "Actualizando precios y existencias…"}
         </div>}
-        {!addressPage && boxes.length > 0 && <div className="cart-section-heading"><h2>Tus paquetes</h2><p>Cada tarjeta es un paquete completo. Cambia la cantidad de cajas para ajustar todo su contenido.</p></div>}
-        {!addressPage && boxes.map(l => <CartBundle key={cartLineKey(l)} id={l.id} quantity={l.quantity} selection={l.selection} item={l.item} quote={l.q} products={products} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity,l.selection)}/>)}
+        {!addressPage && boxes.length > 0 && <div className="cart-section-heading"><h2>Tus paquetes</h2></div>}
+        {!addressPage && boxes.map(l => <CartBundle key={cartLineKey(l)} id={l.id} quantity={l.quantity} selection={l.selection} item={l.item} quote={l.q} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity,l.selection)}/>)}
         {!addressPage && groups.length > 0 && <div className="cart-section-heading"><h2>Tus productos individuales</h2><p>Estos artículos se agregaron por separado y no forman parte de los paquetes de arriba.</p></div>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
           <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>
@@ -103,14 +105,23 @@ export function VolumeCart({
       {lines.length > 0 && <aside className="order-summary">
         <span className="order-kind">Tu compra, en resumen</span><h2>Resumen del pedido</h2>
         {demoOrder && <p role="status">Demostración: estos artículos no generan pedidos reales.</p>}
-        <details className="summary-items"><summary>{lines.length} {lines.length === 1 ? "artículo" : "artículos"} · Ver detalle</summary>
-          <ul>{selected.map(l => <li key={l.id}><span>{l.quantity} unidades · {l.name}</span><b>{l.q ? money(Number(l.q.subtotal)) : "—"}</b></li>)}{boxes.map(l => <li key={cartLineKey(l)}><span>{l.quantity} × {l.item?.name || "Caja no disponible"}{l.selection?' · Personalizada':''}</span><b>{l.q ? money(l.q.subtotal) : "—"}</b></li>)}</ul>
-        </details>
-        <div><span>Cajas e individuales · {quote?.totalPairs ?? "—"} unidades</span><b>{total === null ? "Calculando…" : money(total)}</b></div>
+        <section className="order-receipt" aria-label="Detalle del pedido">
+          <ul>{boxes.map(l=><li className="receipt-line" key={cartLineKey(l)}>
+            <div className="receipt-line-heading"><strong>{l.item?.name||l.q?.name||'Caja pendiente de verificar'}</strong><b>{valid&&l.q?money(l.q.subtotal):'—'}</b></div>
+            <small>{l.quantity} {l.quantity===1?'caja':'cajas'} × {valid&&l.q?money(l.q.unitPrice):'Por verificar'}{l.selection?' · Personalizada':''}</small>
+            {!!l.q?.components.length&&<details className="receipt-contents"><summary>Ver contenido incluido</summary><ul>{l.q.components.map((part,index)=>{
+              const product=products.find(p=>p.id===part.productId)||{name:part.name,category:part.categoryName};
+              return <li key={`${part.productId}-${index}`}>{part.quantity} {isShort(product)?'piezas':'pares'} · {part.name}{usesTripares(product)?` (${triparesLabel(part.quantity)})`:''}</li>;
+            })}</ul></details>}
+          </li>)}{selected.map(l=><li className="receipt-line" key={l.id}>
+            <div className="receipt-line-heading"><strong>{l.name}</strong><b>{valid&&l.q?money(Number(l.q.subtotal)):'—'}</b></div>
+            <small>{l.quantity} {isShort(l.product||{name:l.name})?'piezas':'pares'} × {valid&&l.q?money(Number(l.q.unitPrice)):'Por verificar'} · Individuales</small>
+          </li>)}</ul>
+        </section>
         <div><span>Envío</span><span>{addressPage ? estimate ? money(estimate.price) : "Elige una tarifa" : "En el siguiente paso"}</span></div>
         {quote?.savings!=null&&quote.savings>0&&<div><span>Ahorro al combinar (ya incluido)</span><b>−{money(quote.savings)}</b></div>}
-        <div className="order-final" aria-live="polite"><span>{estimate ? "Total a pagar" : "Subtotal"}</span><b>{total === null ? "—" : money((Math.round(total * 100) + Math.round((estimate?.price || 0) * 100)) / 100)}<small> MXN</small></b></div>
-        <p className="summary-caption">Impuestos incluidos.{estimate?.test ? " Envío de prueba." : ""}</p>
+        <div className="order-final" aria-live="polite"><span>Total:</span><b>{total === null ? "Calculando…" : money((Math.round(total * 100) + Math.round((estimate?.price || 0) * 100)) / 100)}</b></div>
+        <p className="summary-caption">MXN · Impuestos incluidos.{!estimate?' Envío aún no incluido.':''}{estimate?.test ? " Envío de prueba." : ""}</p>
         <Checkout addressPage={addressPage} shipping={estimate} blockedReason={blockedReason}/>
         <Link href={addressPage ? "/carrito" : "/paquetes"}>{addressPage ? "← Editar mi pedido" : "＋ Explorar paquetes para emprender"}</Link>
       </aside>}
