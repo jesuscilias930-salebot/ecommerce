@@ -163,8 +163,10 @@ export function Originals({
       </nav>}
       {categories.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
         <header className={categoryStyles.header}><h2 id={`${categoryId(category.key)}-title`}>{category.label}</h2><span>{category.products.length} {category.products.length===1?'producto':'productos'}</span></header>
-        <CategoryPricing products={allCategories.find(group=>group.key===category.key)?.products||category.products} groups={groups} incomplete={lines.some(line=>line.id>0&&!packages.some(item=>item.id===line.id))}/>
+        <div className="category-shopping-layout">
+        <CategoryPricing label={category.label} products={allCategories.find(group=>group.key===category.key)?.products||category.products} groups={groups} incomplete={lines.some(line=>line.id>0&&!packages.some(item=>item.id===line.id))}/>
         <div className="original-grid">{category.products.map(p=><OriginalCard key={p.id} product={p} products={products} packages={packages}/>)}</div>
+        </div>
       </section>)}
       {!filtered.length && (
         <div className="empty">

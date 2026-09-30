@@ -4,7 +4,7 @@ import {pricingKey,shortProduct} from '@/lib/live-pricing';
 import {money} from '@/lib/money';
 import './category-pricing.css';
 
-export function CategoryPricing({products,groups,incomplete}:{products:Original[];groups:ReturnType<typeof calculateGroups>;incomplete:boolean}) {
+export function CategoryPricing({label,products,groups,incomplete}:{label:string;products:Original[];groups:ReturnType<typeof calculateGroups>;incomplete:boolean}) {
   // Keep independent products and models with different tariffs in separate columns.
   const columns:Original[][]=[];
   for(const product of products){
@@ -19,13 +19,21 @@ export function CategoryPricing({products,groups,incomplete}:{products:Original[
   const units=products.every(shortProduct)?'piezas':'pares';
   const combined=keys.size===1&&products.length>1;
   return <div className="category-pricing">
-    <h3>Tu precio de mayoreo, en un solo lugar</h3>
-    <p>{combined?`Los ${units} de estos modelos y géneros se suman para elegir la escala de precio de cada uno. También cuentan los de tus paquetes.`:'Cada grupo o producto tiene su propia escala. La tabla muestra por separado qué cantidad determina el precio de cada modelo, incluyendo tus paquetes.'}</p>
+    <h3>{label} · Tu pedido</h3>
+    <p className="category-pricing-explanation">{combined?`Combina géneros: todos los ${units} de esta categoría cuentan, incluidos tus paquetes.`:'Cada producto o grupo conserva su propia escala de mayoreo.'}</p>
     <div className="category-pricing-status" role="status" aria-live="polite" aria-atomic="true">
       <strong>{quantity} {units} en el carrito{!combined&&keys.size>1?' · escalas independientes':''}</strong>
       <span>Subtotal de individuales: <b>{total===null?'Por verificar':money(total)}</b></span>
     </div>
-    <p className="category-pricing-hint">Agrega productos abajo. La escala marcada cambia con tu carrito. Para quitar unidades, usa «Quitar» en cada producto.</p>
+    <div className="category-current-rates" aria-live="polite" aria-label="Precios actuales por modelo">
+      {columns.map(column=>{
+        const count=groups.find(group=>group.key===pricingKey(column[0]))?.quantity||0;
+        const matches=column[0].rules.filter(rule=>count>=rule.minQuantity&&(rule.maxQuantity==null||count<=rule.maxQuantity));
+        return count>0?<div key={column[0].id}><span>{columns.length===1?'Precio por '+(units==='pares'?'par':'pieza'):column.map(p=>p.name).join(' / ')}</span><strong>{!incomplete&&matches.length===1?money(Number(matches[0].pricePerUnit)):'Por verificar'}</strong></div>:null;
+      })}
+      {quantity===0&&<small>El precio al agregar aparece junto a la cantidad de cada producto.</small>}
+    </div>
+    <details className="category-price-details"><summary>Ver escalas de mayoreo</summary>
     <div className="category-pricing-scroll" tabIndex={0} role="region" aria-label="Tabla de precios por volumen; desplaza horizontalmente si es necesario">
       <table>
         <caption>Precios en MXN por {units==='pares'?'par':'pieza'}, IVA incluido. Envío aparte. {columns.length>2?'Desliza para ver todos los modelos.':''}</caption>
@@ -44,6 +52,8 @@ export function CategoryPricing({products,groups,incomplete}:{products:Original[
         })}</tbody>
       </table>
     </div>
-    <small>{incomplete?'Falta información de un paquete del carrito. Verifica el pedido en el carrito antes de continuar.':'Vista previa según las reglas disponibles; confirmamos precio y existencias en el carrito. El subtotal no incluye las cajas.'}</small>
+    <small>Las tarifas se actualizan al agregar o quitar productos. El subtotal es solo de individuales; las cajas también cuentan para alcanzar la escala.</small>
+    </details>
+    <small className="category-price-footer">{incomplete?'Falta verificar un paquete. Revisa tu carrito.':'MXN · IVA incluido · Envío aparte. Confirmamos existencias en el carrito.'}</small>
   </div>;
 }
