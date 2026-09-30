@@ -1,4 +1,15 @@
 type Item = {name: string; category?: string | null};
+export function packageCardContents(items:(Item&{quantity:number;assorted?:boolean;categoryId?:number|null})[]){
+ const rows=new Map<string,{name:string;quantity:number;pieces:boolean;tripares:boolean}>();
+ items.forEach((part,index)=>{
+  const category=part.category?.trim();
+  const key=part.assorted?(part.categoryId!=null?`category:${part.categoryId}`:category?`category-name:${category.toLocaleLowerCase('es-MX')}`:`unknown:${index}`):`fixed:${index}`;
+  const row=rows.get(key);
+  if(row)row.quantity+=part.quantity;
+  else rows.set(key,{name:part.assorted?(category||'calcetines surtidos'):part.name,quantity:part.quantity,pieces:!part.assorted&&isShort(part),tripares:!part.assorted&&usesTripares(part)});
+ });
+ return [...rows.values()];
+}
 const normalized = (item: Item) => `${item.name} ${item.category || ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 export const isShort = (item: Item) => /\bshorts?\b/.test(normalized(item));
 // These sock families are sold as three-pair sets; caricatura/económicos are not.

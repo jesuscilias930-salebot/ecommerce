@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { packageQuantityLabel } from "@/lib/sale-presentation";
+import { packageCardContents,triparesLabel } from "@/lib/sale-presentation";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback, useRef } from "react";
 import {useCartQuote} from './use-cart-quote';
 import {QuantityInput} from './quantity-input';
@@ -27,6 +27,7 @@ import { StorePhoto } from "./store-photo";
 import { matchesSearch } from '@/lib/shopping-discovery';
 import discovery from './shopping-discovery.module.css';
 import "./purchase-actions.css";
+import "./package-card-contents.css";
 import {trackStoreEvent} from '@/lib/store-events';
 type Line = CartLine;
 export const Context = createContext<{
@@ -232,7 +233,7 @@ export function Card({ item }: { item: Package }) {
         <Link href={`/paquetes/${item.id}`}>
           <h3>{item.name}</h3>
         </Link>
-        <p className="card-content-preview"><strong>{packageQuantityLabel(item)}</strong> · {item.items.length} tipos de producto</p>
+        <div className="package-card-contents"><span>Tu caja incluye</span><ul>{packageCardContents(item.items).map((part,index)=><li key={index}><strong>{part.quantity} {part.pieces?(part.quantity===1?'pieza':'piezas'):(part.quantity===1?'par':'pares')}</strong> de {part.name}{part.tripares&&<small>{triparesLabel(part.quantity)}</small>}</li>)}</ul></div>
         <div className="price-row">
           <b>
             {money(item.price)} <small>MXN</small>
