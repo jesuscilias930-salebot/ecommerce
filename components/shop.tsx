@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { packageQuantityLabel,isShort } from "@/lib/sale-presentation";
+import { packageQuantityLabel } from "@/lib/sale-presentation";
 import { createContext, useContext, useEffect, useState, useTransition, useCallback, useRef } from "react";
 import {useCartQuote} from './use-cart-quote';
 import {QuantityInput} from './quantity-input';
@@ -19,7 +19,7 @@ import {
   Search,
   Menu,
 } from "lucide-react";
-import {packageCategories} from "@/lib/package-categories";
+import {packageCategories,packageFilter,type PackageFilter} from "@/lib/package-categories";
 import type { Package } from "@/lib/catalog";
 import { money } from "@/lib/money";
 import { BoxArt } from "./box-art";
@@ -239,10 +239,6 @@ export function Card({ item }: { item: Package }) {
           </b>
           <span>{item.available ? "Disponible" : "Agotado"}</span>
         </div>
-        <small>
-          Referencia por caja · IVA incluido · Envío aparte{item.pieces>0?` · Promedio ${money(item.price/item.pieces)} por ${item.items.every(i=>!isShort(i))?'par':'unidad'}`:''}.
-        </small>
-        <small>Tu precio se ajusta al combinar productos en el carrito.</small>
         <AddButton item={item} />
       </div>
     </article>
@@ -251,76 +247,41 @@ export function Card({ item }: { item: Package }) {
 export function PackageSections({items,limitPerCategory}:{items:Package[];limitPerCategory?:number}) {
  return <div>{packageCategories(items).map(group=><section key={group.name} style={{marginBottom:40}} aria-label={group.name}><div className="section-heading"><h3>{group.name}</h3><span>{group.items.length} paquetes</span></div><div className="product-grid">{group.items.slice(0,limitPerCategory).map(item=><Card key={item.id} item={item}/>)}</div></section>)}</div>;
 }
-export function Catalog({ items, budget = "all", error, initialQuery = '' }: { items: Package[]; budget?: string; error?: string; initialQuery?: string }) {
+export function Catalog({ items, category = "all", error, initialQuery = '' }: { items: Package[]; category?: PackageFilter; error?: string; initialQuery?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  function setBudget(value: string) {
+  function setCategory(value: PackageFilter) {
     const params = new URLSearchParams();
-    if (value !== 'all') params.set('budget', value);
+    if (value !== 'all') params.set('category', value);
     if (query.trim()) params.set('q', query.trim());
     startTransition(() => router.replace(`/paquetes?${params}`, { scroll: false }));
   }
   const [query, setQuery] = useState(initialQuery);
   useEffect(()=>setQuery(initialQuery),[initialQuery]);
-  const [sort, setSort] = useState("default");
-  const filtered = items
-    .filter(
-      (p) =>
-        matchesSearch([p.name, p.storeCategory || '', p.description || '', ...p.items.map(item=>item.name)].join(' '), query),
-    )
-    .sort((a, b) =>
-      sort === "asc"
-        ? a.price - b.price
-          : sort === "desc"
-          ? b.price - a.price
-          : sort === 'unit' ? (a.pieces > 0 ? a.price/a.pieces : Infinity) - (b.pieces > 0 ? b.price/b.pieces : Infinity)
-          : sort === 'pieces' ? b.pieces - a.pieces
-          : 0,
-    );
+  const filtered = items.filter(p => (category==='all'||packageFilter(p)===category)&&matchesSearch([p.name,p.storeCategory||'',p.description||'',...p.items.map(item=>item.name)].join(' '),query));
   return (
     <>
       <div className="catalog-controls">
         <div className="chips">
           {[
             ["all", "Todos los paquetes"],
-            ["low", "Menos de $1,500"],
-            ["mid", "$1,500 a $3,000"],
-            ["high", "Más de $3,000"],
+            ["caricatura", "Caricatura"],
+            ["deportivo", "Deportivo"],
+            ["surtido", "Surtido"],
           ].map(([id, label]) => (
             <button
               key={id}
-              aria-pressed={budget === id}
+              aria-pressed={category === id}
               disabled={pending}
-              className={budget === id ? "active" : ""}
-              onClick={() => setBudget(id)}
+              className={category === id ? "active" : ""}
+              onClick={() => setCategory(id as PackageFilter)}
             >
               {label}
             </button>
           ))}
         </div>
-        <div className="search-sort">
-          <label className="search">
-            <Search size={18} />
-            <input
-              aria-label="Buscar paquete"
-              placeholder="Busca tu paquete"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-          <select
-            aria-label="Ordenar paquetes"
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="default">Orden del catálogo</option>
-            <option value="asc">Menor precio</option>
-            <option value="desc">Mayor precio</option>
-            <option value="unit">Menor costo promedio por unidad</option>
-            <option value="pieces">Más unidades por caja</option>
-          </select>
-        </div>
       </div>
+      {query&&<p>Resultados para «{query}» <button type="button" onClick={()=>{setQuery('');startTransition(()=>router.replace('/paquetes',{scroll:false}));}}>Limpiar búsqueda</button></p>}
       <p className="result-count" aria-live="polite">
         {pending ? "Consultando paquetes…" : error ? "No se pudo cargar el catálogo" : `${filtered.length} paquetes para empezar`}
       </p>
