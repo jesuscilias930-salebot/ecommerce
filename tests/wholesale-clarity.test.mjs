@@ -14,6 +14,13 @@ test('stock counts exact custom selection and loose pairs without guessing autom
  const lines=[{id:10,quantity:2,selection:[{productId:2,quantity:30}]},{id:10,quantity:1},{id:-2,quantity:5}];
  assert.equal(fixedPairsInCart(2,lines,[{id:10,items:[{productId:2,quantity:50,assorted:true}]}]),65);
 });
+test('mixed personalized boxes also consume fixed sports stock',()=>{
+ const packages=[{id:10,items:[{productId:1,quantity:30,assorted:false},{productId:2,quantity:50,assorted:true}]}];
+ const lines=[{id:10,quantity:2,selection:[{productId:2,quantity:20},{productId:3,quantity:30}]},{id:-1,quantity:5}];
+ assert.equal(fixedPairsInCart(1,lines,packages),65);
+ assert.equal(fixedPairsInCart(2,lines,packages),40);
+ assert.equal(fixedPairsInCart(3,lines,packages),60);
+});
 test('half shortcut requires two options, even total and enough stock for every box',()=>{
  const variants=[{id:1,currentStock:50},{id:2,currentStock:50}];
  assert.deepEqual(halfSelection(50,2,variants,[],[]),[{productId:1,quantity:25},{productId:2,quantity:25}]);

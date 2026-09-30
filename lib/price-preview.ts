@@ -9,7 +9,7 @@ export function nextDiscount(rules:Tier[],quantity:number,price:number){
 // Subtract exact custom compositions as well as fixed bundles. Automatic assortments
 // require the server's pooled-stock check and must not be allocated to a guessed gender.
 export function fixedPairsInCart(productId:number,lines:CartLine[],packages:Package[]){
- return lines.reduce((sum,line)=>sum+(line.id<0?(line.id===-productId?line.quantity:0):line.quantity*(line.selection?.filter(s=>s.productId===productId).reduce((n,s)=>n+s.quantity,0)??packages.find(p=>p.id===line.id)?.items.filter(i=>i.productId===productId&&!i.assorted).reduce((n,i)=>n+i.quantity,0)??0)),0);
+ return lines.reduce((sum,line)=>sum+(line.id<0?(line.id===-productId?line.quantity:0):line.quantity*((line.selection?.filter(s=>s.productId===productId).reduce((n,s)=>n+s.quantity,0)??0)+(packages.find(p=>p.id===line.id)?.items.filter(i=>i.productId===productId&&!i.assorted).reduce((n,i)=>n+i.quantity,0)??0))),0);
 }
 export function halfSelection(total:number,boxes:number,candidates:Original[],lines:CartLine[],packages:Package[]){
  if(candidates.length!==2||!Number.isInteger(total)||total%2!==0||!Number.isInteger(boxes)||boxes<1)return null;

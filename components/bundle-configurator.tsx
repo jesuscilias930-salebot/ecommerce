@@ -6,7 +6,7 @@ import {Context} from './shop';
 import {useCartQuote} from './use-cart-quote';
 import type {Package} from '@/lib/catalog';
 import type {Original} from '@/lib/product-catalog';
-import {selectionKey,type CartLine,type Selection} from '@/lib/bundle-selection';
+import {customizableParts,selectionKey,type CartLine,type Selection} from '@/lib/bundle-selection';
 import {money} from '@/lib/money';
 import styles from './bundle-configurator.module.css';
 import {assortmentDescription} from '@/lib/product-details';
@@ -24,8 +24,10 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
  const [counts,setCounts]=useState<Record<number,number>>(()=>Object.fromEntries((saved?.selection||[]).map(s=>[s.productId,s.quantity])));
  const [amount,setAmount]=useState(saved?.quantity||1);
  const [added,setAdded]=useState(false);
- const candidates=products.filter(p=>p.categoryId===item.items[0].categoryId&&p.currentStock>0).sort((a,b)=>a.id-b.id);
- const total=item.items.reduce((n,i)=>n+i.quantity,0);
+ const parts=customizableParts(item);
+ const fixed=item.items.filter(i=>!i.assorted);
+ const candidates=products.filter(p=>p.categoryId===parts[0]?.categoryId&&p.currentStock>0).sort((a,b)=>a.id-b.id);
+ const total=parts.reduce((n,i)=>n+i.quantity,0);
  const selection:Selection=Object.entries(counts).filter(([,n])=>n>0).map(([id,quantity])=>({productId:Number(id),quantity}));
  const selected=selection.reduce((n,s)=>n+s.quantity,0);
  const amountValid=Number.isInteger(amount)&&amount>=1&&amount<=99;
@@ -45,7 +47,8 @@ function Editor({item,products,error,saved}:{item:Package;products:Original[];er
    <span>{valid&&box?'Precio con tu carrito':'Precio según la cantidad total de tu pedido'} · IVA incluido · Envío aparte</span>
   </div>
   <h2 id="choose-box-title">Personalizar géneros</h2>
-  <p>Elige cómo repartir tus {total} pares o deja que armemos tu surtido.</p>
+  <p>Elige cómo repartir tus {total} pares{fixed.length?' de caricatura':''} o deja que armemos tu surtido.</p>
+  {fixed.length>0&&<div className={styles.note}><strong>El resto de tu caja no cambia:</strong><ul>{fixed.map((part,index)=><li key={index}>{part.quantity} · {part.name}</li>)}</ul><p>Solo eliges los géneros de los pares marcados como personalizables.</p></div>}
   <fieldset className={styles.modes}><legend>Cómo quieres cada caja</legend>{[['assorted','Surtido automático'],['custom','Elegir cantidades']].map(([value,label])=><label key={value}><input type="radio" name={`bundle-mode-${item.id}`} checked={mode===value} onChange={()=>{setMode(value);setAdded(false);void trackStoreEvent('ConfigurationStarted',{id:item.id,mode:value as 'custom'|'assorted'},`configuration:${item.id}`);}}/>{label}</label>)}</fieldset>
   <p className={styles.note}>{assortmentDescription}</p>
   {error&&<p role="alert">{error} <button type="button" onClick={()=>window.location.reload()}>Reintentar</button></p>}

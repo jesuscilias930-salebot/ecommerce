@@ -16,10 +16,19 @@ test('assorted and personalized boxes coexist and quantities change independentl
  assert.equal(cartCount([...lines,{id:-1,quantity:100}]),4);
 });
 
-test('only fully assorted caricatura packages can be customized',()=>{
+test('only marked caricatura slots can be customized, including mixed boxes',()=>{
  const part={assorted:true,categoryId:1,category:'Caricatura'};
  assert.equal(customizable({items:[part]}),true);
+ assert.equal(customizable({items:[{assorted:false,categoryId:2,category:'Deportivos'},part]}),true);
  for(const items of [[],[{...part,assorted:false}],[part,{...part,categoryId:2}],[{...part,category:'Deportivos'}]])assert.equal(customizable({items}),false);
+});
+
+test('mixed box hints preserve fixed sports while replacing only assorted slots',()=>{
+ const products=[{id:1,name:'Caricatura',categoryId:1,category:'Caricatura',currentStock:500,rules:[]},{id:2,name:'Dama',categoryId:1,category:'Caricatura',currentStock:500,rules:[]},{id:3,name:'Tin deportivo',categoryId:2,category:'Deportivos',currentStock:500,rules:[]}];
+ const packages=[{id:10,items:[{productId:3,quantity:30,assorted:false,categoryId:2},{productId:1,quantity:30,assorted:true,categoryId:1}]}];
+ const groups=calculateGroups(products,[{id:10,quantity:2,selection:[{productId:1,quantity:10},{productId:2,quantity:20}]}],packages);
+ assert.equal(groups.find(g=>g.key==='product:3').quantity,60);
+ assert.equal(groups.find(g=>g.key==='category:1').quantity,60);
 });
 test('selection rejects duplicates, invalid quantities and unbounded input',()=>{
  for(const value of [null,[],[{productId:1,quantity:0}],[{productId:1,quantity:1.5}],[{productId:-1,quantity:20}],[{productId:1,quantity:10},{productId:1,quantity:40}],Array.from({length:201},(_,i)=>({productId:i+1,quantity:1}))]){

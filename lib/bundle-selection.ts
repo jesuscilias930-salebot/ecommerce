@@ -10,7 +10,8 @@ export function cleanSelection(value:unknown):Selection|undefined {
  return value===undefined?undefined:(value as Selection).map(s=>({productId:s.productId,quantity:s.quantity})).sort((a,b)=>a.productId-b.productId);
 }
 export function bundleInput(b:{bundleId:number;quantity:number;selection?:Selection}){return {bundleId:b.bundleId,quantity:b.quantity,...(b.selection!==undefined?{selection:cleanSelection(b.selection)}:{})};}
-export function customizable(item:Package){return item.items.length>0&&item.items.every(i=>i.assorted&&i.categoryId!=null&&i.categoryId===item.items[0].categoryId&&/caricatura/i.test(i.category||''));}
+export function customizableParts(item:Package){return item.items.filter(i=>i.assorted);}
+export function customizable(item:Package){const parts=customizableParts(item);return parts.length>0&&parts.every(i=>i.categoryId!=null&&i.categoryId===parts[0].categoryId&&/caricatura/i.test(i.category||''));}
 export const selectionKey=(value?:Selection)=>JSON.stringify(cleanSelection(value)||null);
 export const cartLineKey=(line:CartLine)=>`${line.id}:${selectionKey(line.selection)}`;
 export const cartCount=(lines:CartLine[])=>lines.reduce((n,l)=>n+(l.id>0?l.quantity:1),0);

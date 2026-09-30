@@ -109,10 +109,10 @@ export function VolumeCart({
           <ul>{boxes.map(l=><li className="receipt-line" key={cartLineKey(l)}>
             <div className="receipt-line-heading"><strong>{l.item?.name||l.q?.name||'Caja pendiente de verificar'}</strong><b>{valid&&l.q?money(l.q.subtotal):'—'}</b></div>
             <small>{l.quantity} {l.quantity===1?'caja':'cajas'} × {valid&&l.q?money(l.q.unitPrice):'Por verificar'}{l.selection?' · Personalizada':''}</small>
-            {!!l.q?.components.length&&<details className="receipt-contents"><summary>Ver contenido incluido</summary><ul>{l.q.components.map((part,index)=>{
+            {!!l.q?.components.length&&<div className="receipt-contents"><p>Desglose incluido en la caja</p><ul>{l.q.components.map((part,index)=>{
               const product=products.find(p=>p.id===part.productId)||{name:part.name,category:part.categoryName};
-              return <li key={`${part.productId}-${index}`}>{part.quantity} {isShort(product)?'piezas':'pares'} · {part.name}{usesTripares(product)?` (${triparesLabel(part.quantity)})`:''}</li>;
-            })}</ul></details>}
+              return <li key={`${part.productId}-${index}`}><span>{part.name}{usesTripares(product)?` (${triparesLabel(part.quantity)})`:''}</span><div className="receipt-component-price"><small>{part.quantity} {isShort(product)?'piezas':'pares'} × {valid?money(part.unitPrice):'Por verificar'}</small><b>{valid?money(part.subtotal):'—'}</b></div></li>;
+            })}</ul><small>Incluido en el importe del paquete; no es un cargo adicional.</small></div>}
           </li>)}{selected.map(l=><li className="receipt-line" key={l.id}>
             <div className="receipt-line-heading"><strong>{l.name}</strong><b>{valid&&l.q?money(Number(l.q.subtotal)):'—'}</b></div>
             <small>{l.quantity} {isShort(l.product||{name:l.name})?'piezas':'pares'} × {valid&&l.q?money(Number(l.q.unitPrice)):'Por verificar'} · Individuales</small>
