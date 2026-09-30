@@ -29,6 +29,5 @@ export function CartBundle({ id, quantity,selection, item, quote, availabilityUn
     </div>
     {item&&customizable(item)&&<p className="cart-selection-label">{selection?'Géneros personalizados':'Surtido según existencias'}</p>}
     <CartQuantity name={name} quantity={quantity} max={availabilityUnknown?null:item?.available ?? 0} unit="cajas" onChange={onChange}/>
-    {quote?.savings != null && quote.savings > 0 && <p className="cart-line-saving">Ahorras {money(quote.savings)} en este paquete con el volumen de tu pedido. Ya incluido en el total.</p>}
   </article>;
 }

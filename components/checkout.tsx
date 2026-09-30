@@ -7,7 +7,6 @@ import {money} from '@/lib/money';
 import {ShippingAddress,validateAddress} from '@/lib/shipping-address';
 import type {ShippingEstimate} from './cart-shipping';
 import {useRouter} from 'next/navigation';
-import Link from 'next/link';
 import {trackStoreEvent} from '@/lib/store-events';
 
 type Receipt={body:string;folio:string;whatsappUrl:string;subtotal:number};
@@ -83,7 +82,6 @@ export function Checkout({blockedReason,addressPage=false,shipping}:{blockedReas
   finally{lock.current=false;setBusy(false);}
  }
  return <section aria-label="Concluir pedido" className="checkout-actions">
-  <small>Antes de concluir, consulta los <Link href="/terminos">términos de compra</Link>, la <Link href="/envios-y-devoluciones">política de envíos y devoluciones</Link> y el <Link href="/privacidad">aviso de privacidad</Link>. Aceptar publicidad es opcional.</small>
   {cardPaymentsEnabled&&!addressPage&&<><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length} onClick={()=>router.push('/checkout')}>Continuar a dirección y envío →</button><small>Sin crear una cuenta. Verás el envío y el total antes de pagar.</small></>}
   {cardPaymentsEnabled&&addressPage&&<><p className="checkout-explanation">{shipping?'Dirección y envío listos. Revisa tu total antes de continuar.':'Completa tu dirección y elige un envío para continuar.'}</p><button type="button" className="primary" disabled={busy||!!blockedReason||!lines.length||!shipping} onClick={()=>void complete('stripe')}>{busy?'Preparando pago…':'Continuar al pago seguro →'}</button><small>El pago se confirma en Stripe. Todavía no se realizará ningún cargo.</small></>}
   {cardPaymentsEnabled&&<span className="checkout-or">o</span>}

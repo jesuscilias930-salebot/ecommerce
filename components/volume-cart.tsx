@@ -13,6 +13,7 @@ import type { Package } from "@/lib/catalog";
 import type { Original } from "@/lib/product-catalog";
 import { pricingKey, pricingName } from "@/lib/live-pricing";
 import { money } from "@/lib/money";
+import {cartDisplayName} from '@/lib/cart-display-name';
 import {isShort,usesTripares,triparesLabel} from '@/lib/sale-presentation';
 import "./order-cart.css";
 import "./order-receipt.css";
@@ -111,7 +112,7 @@ export function VolumeCart({
             <small>{l.quantity} {l.quantity===1?'caja':'cajas'} × {valid&&l.q?money(l.q.unitPrice):'Por verificar'}{l.selection?' · Personalizada':''}</small>
             {!!l.q?.components.length&&<div className="receipt-contents"><p>Desglose incluido en la caja</p><ul>{l.q.components.map((part,index)=>{
               const product=products.find(p=>p.id===part.productId)||{name:part.name,category:part.categoryName};
-              return <li key={`${part.productId}-${index}`}><span>{part.name}{usesTripares(product)?` (${triparesLabel(part.quantity)})`:''}</span><div className="receipt-component-price"><small>{part.quantity} {isShort(product)?'piezas':'pares'} × {valid?money(part.unitPrice):'Por verificar'}</small><b>{valid?money(part.subtotal):'—'}</b></div></li>;
+              return <li key={`${part.productId}-${index}`}><span>{cartDisplayName(part.name)}{usesTripares(product)?` (${triparesLabel(part.quantity)})`:''}</span><div className="receipt-component-price"><small>{part.quantity} {isShort(product)?'piezas':'pares'} × {valid?money(part.unitPrice):'Por verificar'}</small><b>{valid?money(part.subtotal):'—'}</b></div></li>;
             })}</ul><small>Incluido en el importe del paquete; no es un cargo adicional.</small></div>}
           </li>)}{selected.map(l=><li className="receipt-line" key={l.id}>
             <div className="receipt-line-heading"><strong>{l.name}</strong><b>{valid&&l.q?money(Number(l.q.subtotal)):'—'}</b></div>
@@ -119,7 +120,6 @@ export function VolumeCart({
           </li>)}</ul>
         </section>
         <div><span>Envío</span><span>{addressPage ? estimate ? money(estimate.price) : "Elige una tarifa" : "En el siguiente paso"}</span></div>
-        {quote?.savings!=null&&quote.savings>0&&<div><span>Ahorro al combinar (ya incluido)</span><b>−{money(quote.savings)}</b></div>}
         <div className="order-final" aria-live="polite"><span>Total:</span><b>{total === null ? "Calculando…" : money((Math.round(total * 100) + Math.round((estimate?.price || 0) * 100)) / 100)}</b></div>
         <p className="summary-caption">MXN · Impuestos incluidos.{!estimate?' Envío aún no incluido.':''}{estimate?.test ? " Envío de prueba." : ""}</p>
         <Checkout addressPage={addressPage} shipping={estimate} blockedReason={blockedReason}/>
