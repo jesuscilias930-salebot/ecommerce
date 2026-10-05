@@ -1,65 +1,63 @@
+"use client";
+import {useId,useState} from 'react';
 import type {Original} from '@/lib/product-catalog';
 import type {calculateGroups} from '@/lib/live-pricing';
-import {pricingKey,shortProduct} from '@/lib/live-pricing';
+import {pricingKey} from '@/lib/live-pricing';
 import {money} from '@/lib/money';
-import {usesTripares,saleQuantityLabel,saleUnitPrice,saleTierBoundaries} from '@/lib/sale-presentation';
+import {salePackSize,saleUnit,saleUnits,saleUnitPrice} from '@/lib/sale-presentation';
 import './category-pricing.css';
 
 export function CategoryPricing({label,products,groups,incomplete}:{label:string;products:Original[];groups:ReturnType<typeof calculateGroups>;incomplete:boolean}) {
-  // Keep independent products and models with different tariffs in separate columns.
+  // Only identical tariffs in the same pricing pool share a scale.
   const columns:Original[][]=[];
   for(const product of products){
     const existing=columns.find(column=>pricingKey(column[0])===pricingKey(product)&&JSON.stringify(column[0].rules)===JSON.stringify(product.rules));
     if(existing)existing.push(product);else columns.push([product]);
   }
-  const tripares=products.length>0&&products.every(usesTripares);
-  const packSize=tripares?3:1;
-  const boundaries=saleTierBoundaries(products.flatMap(p=>p.rules.flatMap(r=>[r.minQuantity,...(r.maxQuantity!=null&&r.maxQuantity<2147483647?[r.maxQuantity+1]:[])])),packSize);
-  const keys=new Set(products.map(pricingKey));
-  const selected=groups.filter(group=>keys.has(group.key));
-  const quantity=selected.reduce((sum,group)=>sum+group.quantity,0);
-  const total=!incomplete&&selected.every(group=>group.total!==null)?selected.reduce((sum,group)=>sum+Math.round(group.total!*100),0)/100:null;
-  const units=tripares?'tripares':products.every(shortProduct)?'piezas':'pares';
-  const unit=tripares?'tripar':units==='piezas'?'pieza':'par';
-  const quantityLabel=(count:number)=>tripares?saleQuantityLabel(count,products[0]):`${count} ${units}`;
-  const combined=keys.size===1&&products.length>1;
-  return <div className="category-pricing">
-    <h3>{label} · Tu pedido</h3>
-    <p className="category-pricing-explanation">{combined?`Combina géneros: todos los ${units} de esta categoría cuentan, incluidos tus paquetes.`:'Cada producto o grupo conserva su propia escala de mayoreo.'}</p>
-    {tripares&&<p className="category-pricing-explanation">Cada tripar contiene 3 pares. Los precios y cantidades de esta tabla son por tripar.</p>}
-    <div className="category-pricing-status" role="status" aria-live="polite" aria-atomic="true">
-      <strong>{quantityLabel(quantity)} en el carrito{!combined&&keys.size>1?' · escalas independientes':''}</strong>
-      <span>Subtotal de individuales: <b>{total===null?'Por verificar':money(total)}</b></span>
+  const [selectedId,setSelectedId]=useState<number|null>(null);
+  const selectId=useId();
+  const selected=columns.find(column=>column[0].id===selectedId)||columns[0];
+  if(!selected)return null;
+  const product=selected[0];
+  const name=selected.length>1?'Todos los modelos con esta tarifa':product.name;
+  const group=groups.find(group=>group.key===pricingKey(product));
+  const count=group?.quantity||0;
+  const size=salePackSize(product),unit=saleUnit(product),units=saleUnits(product);
+  const tiers=product.rules.filter(rule=>Number.isFinite(Number(rule.pricePerUnit))&&Number(rule.pricePerUnit)>=0).map(rule=>({
+    rule,min:Math.max(1,Math.ceil(rule.minQuantity/size)),
+    max:rule.maxQuantity==null||rule.maxQuantity>=2147483647?null:Math.floor(rule.maxQuantity/size),
+    price:saleUnitPrice(Number(rule.pricePerUnit),product),
+  })).filter(tier=>tier.max===null||tier.max>=tier.min).sort((a,b)=>a.min-b.min);
+  const matches=tiers.filter(tier=>count>=tier.rule.minQuantity&&(tier.rule.maxQuantity==null||count<=tier.rule.maxQuantity));
+  const current=count>0?(matches.length===1?matches[0]:null):tiers[0];
+  const verified=!incomplete&&!!current;
+  const next=verified?tiers.find(tier=>tier.rule.minQuantity>count&&tier.price<current!.price):undefined;
+  const missing=next?Math.ceil((next.rule.minQuantity-count)/size):0;
+  const selectedRows=group?.rows.filter(row=>selected.some(p=>p.id===row.product?.id))||[];
+  const subtotal=!incomplete&&selectedRows.every(row=>row.total!==null)?selectedRows.reduce((sum,row)=>sum+Math.round(row.total!*100),0)/100:null;
+  const combined=pricingKey(product).startsWith('category:')||pricingKey(product).startsWith('group:')||pricingKey(product)==='shorts:caballero';
+  return <aside className="category-pricing" aria-label={`Precios de ${label}`}>
+    <h3>Tu precio de mayoreo</h3>
+    {columns.length>1?<div className="category-price-picker"><label htmlFor={selectId}>Consultar precio de</label><select id={selectId} value={product.id} onChange={event=>setSelectedId(Number(event.target.value))}>{columns.map(column=><option key={column[0].id} value={column[0].id}>{column.map(p=>p.name).join(' / ')}</option>)}</select></div>:<p className="category-price-model">{selected.length>1?label:name}</p>}
+    <p className="category-price-scope">{combined?'Sumamos los de tus paquetes e individuales de este grupo.':'Sumamos este producto en paquetes e individuales; otros productos tienen su propia escala.'}{size===3?' 1 tripar = 3 pares.':''}</p>
+    <div className="category-price-overview" role="status" aria-live="polite" aria-atomic="true">
+      <div><span>Llevas acumulados</span><strong>{size===3&&count%3===0?count/3:count} {size===3&&count%3?'pares':units}</strong>{size===3&&<small>{count%3?'Incluye el contenido de tus cajas':`${count} pares en total`}</small>}</div>
+      <div><span>{count>0?'Tu tarifa actual':'Precio inicial'}</span><strong>{verified?money(current!.price):'Por verificar'}</strong><small>por {unit}{size===3?' de 3 pares':''}</small></div>
     </div>
-    <div className="category-current-rates" aria-live="polite" aria-label="Precios actuales por modelo">
-      {columns.map(column=>{
-        const count=groups.find(group=>group.key===pricingKey(column[0]))?.quantity||0;
-        const matches=column[0].rules.filter(rule=>count>=rule.minQuantity&&(rule.maxQuantity==null||count<=rule.maxQuantity));
-        return count>0?<div key={column[0].id}><span>{columns.length===1?'Precio por '+unit:column.map(p=>p.name).join(' / ')+' · por '+unit}</span><strong>{!incomplete&&matches.length===1?money(tripares?saleUnitPrice(Number(matches[0].pricePerUnit),column[0]):Number(matches[0].pricePerUnit)):'Por verificar'}</strong></div>:null;
-      })}
-      {quantity===0&&<small>El precio al agregar aparece junto a la cantidad de cada producto.</small>}
-    </div>
-    <details className="category-price-details"><summary>Ver escalas de mayoreo</summary>
-    <div className="category-pricing-scroll" tabIndex={0} role="region" aria-label="Tabla de precios por volumen; desplaza horizontalmente si es necesario">
-      <table>
-        <caption>Precios en MXN por {unit}, IVA incluido. Envío aparte. {columns.length>2?'Desliza para ver todos los modelos.':''}</caption>
-        <thead><tr><th scope="col">Cantidad para la escala</th>{columns.map(column=>{
-          const group=groups.find(g=>g.key===pricingKey(column[0]));
-          return <th scope="col" key={column[0].id}>{columns.length===1&&column.length>1?'Todos los modelos y géneros':column.map(p=>p.name).join(' / ')}<small>{quantityLabel(group?.quantity||0)} acumulados</small></th>;
-        })}</tr></thead>
-        <tbody>{boundaries.map((min,index)=>{
-          const max=boundaries[index+1]!=null?boundaries[index+1]-1:null;
-          return <tr key={min}><th scope="row">{max===null?`${min} o más`:`${min}–${max}`} {units}</th>{columns.map(column=>{
-            const rules=column[0].rules.filter(rule=>min*packSize>=rule.minQuantity&&(rule.maxQuantity==null||min*packSize<=rule.maxQuantity));
-            const quantity=groups.find(g=>g.key===pricingKey(column[0]))?.quantity||0;
-            const active=!incomplete&&Math.ceil(quantity/packSize)>=min&&(max===null||Math.ceil(quantity/packSize)<=max)&&rules.length===1&&quantity>=rules[0].minQuantity&&(rules[0].maxQuantity==null||quantity<=rules[0].maxQuantity);
-            return <td key={column[0].id} className={active?'category-price-active':undefined}>{rules.length===1?money(tripares?saleUnitPrice(Number(rules[0].pricePerUnit),column[0]):Number(rules[0].pricePerUnit)):'—'}{active&&<small>✓ Tu tarifa actual</small>}</td>;
-          })}</tr>;
-        })}</tbody>
-      </table>
-    </div>
-    <small>Las tarifas se actualizan al agregar o quitar productos. El subtotal es solo de individuales; las cajas también cuentan para alcanzar la escala.</small>
+    {next&&<div className="category-next-price"><p>Agrega <b>{missing} {missing===1?unit:units}</b> {combined?'a este grupo':'de este producto'} y alcanza <b>{money(next.price)} por {unit}</b>.</p><progress value={Math.min(count,next.rule.minQuantity)} max={next.rule.minQuantity} aria-label={`Avance al siguiente precio de ${money(next.price)} por ${unit}`}/></div>}
+    {verified&&count>0&&!next&&<p className="category-best-price">✓ Ya tienes la mejor tarifa disponible de esta escala.</p>}
+    <details className="category-price-details"><summary>Ver todos los precios por cantidad</summary>
+      <p className="category-price-list-heading">{name} · Precio por {unit}{size===3?' (3 pares)':''}</p>
+      <ul className="category-price-list" aria-label={`Escalas de ${name}`}>
+        {tiers.map((tier,index)=>{
+          const active=!incomplete&&count>0&&matches.length===1&&current===tier;
+          return <li key={`${tier.min}-${index}`} className={active?'category-price-active':undefined}><div><span>{tier.max===null?`${tier.min} o más`:tier.min===tier.max?tier.min:`${tier.min}–${tier.max}`} {units}</span>{active&&<small>✓ Tu tarifa actual</small>}</div><strong>{money(tier.price)}</strong></li>;
+        })}
+      </ul>
+      {!tiers.length&&<p>No hay una escala disponible. Consulta con un asesor.</p>}
+      <small>Se aplica automáticamente al agregar o quitar artículos. Las cajas también cuentan.</small>
     </details>
-    <small className="category-price-footer">{incomplete?'Falta verificar un paquete. Revisa tu carrito.':'MXN · IVA incluido · Envío aparte. Confirmamos existencias en el carrito.'}</small>
-  </div>;
+    <div className="category-price-subtotal"><span>Individuales {columns.length>1?'de esta selección':'de este grupo'}</span><b>{subtotal===null?'Por verificar':money(subtotal)}</b></div>
+    <small className="category-price-footer">{incomplete?'Falta verificar un paquete. Revisa tu carrito.':'MXN · IVA incluido · Envío aparte.'}</small>
+  </aside>;
 }

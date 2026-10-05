@@ -1,31 +1,29 @@
-.category-pricing{padding:20px;border:1px solid #dce3dc;border-radius:16px;background:#fafcf8;margin-bottom:24px;min-width:0}
-.category-pricing h3{margin:0 0 8px;font-size:20px}.category-pricing p{font-size:14px;line-height:1.6;margin:8px 0}
-.category-pricing-status{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;padding:14px;background:#e9f0df;border-radius:10px;margin:14px 0}
+.category-pricing{padding:18px;border:1px solid #dce3dc;border-radius:16px;background:#fafcf8;min-width:0;color:#183c32;box-sizing:border-box}
+.category-pricing h3{margin:0 0 12px;font-size:18px}
+.category-pricing p{font-size:13px;line-height:1.5;margin:8px 0}
 .category-pricing small{display:block;font-size:12px;line-height:1.5;color:#526057}
-.category-pricing-scroll{overflow-x:auto;max-width:100%;margin:14px 0}.category-pricing-scroll:focus-visible{outline:2px solid #286448;outline-offset:3px}
-.category-pricing table{width:100%;border-collapse:collapse;background:white;font-size:14px}.category-pricing caption{text-align:left;padding:0 0 10px;font-size:12px;color:#526057}
-.category-pricing th,.category-pricing td{text-align:left;padding:12px;border-bottom:1px solid #e0e5de;min-width:130px;vertical-align:top}.category-pricing thead th{min-width:170px;max-width:260px;font-size:13px}.category-pricing tbody th{font-weight:500;white-space:nowrap}
-.category-pricing .category-price-active{background:#e2edc7;color:#183c32;font-weight:700;box-shadow:inset 3px 0 #34694a}.category-price-active small{color:#244e35}
+.category-price-picker label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+.category-price-picker select{width:100%;min-width:0;min-height:44px;padding:10px 30px 10px 10px;border:1px solid #b8c8ba;border-radius:8px;background:#fff;color:#183c32;font:inherit;font-size:16px;box-sizing:border-box}
+.category-pricing .category-price-model{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.category-pricing .category-price-scope{color:#526057;font-size:12px}
+.category-price-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;background:#e9f0df;border-radius:12px;padding:14px;margin:12px 0}
+.category-price-overview>div{min-width:0}.category-price-overview span{display:block;font-size:12px;margin-bottom:5px}.category-price-overview strong{display:block;font-size:21px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;line-height:1.25}.category-price-overview small{margin-top:4px}
+.category-next-price p{font-size:12px;margin:8px 0}.category-next-price progress{display:block;width:100%;height:6px;accent-color:#34694a;border:0;border-radius:10px;overflow:hidden}.category-next-price progress::-webkit-progress-bar{background:#e0e7da}.category-next-price progress::-webkit-progress-value{background:#34694a}.category-next-price progress::-moz-progress-bar{background:#34694a}
+.category-pricing .category-best-price{font-size:12px;color:#24573f}
+.category-price-details{border-top:1px solid #dce3dc;margin-top:12px;padding-top:4px}.category-price-details summary{cursor:pointer;font-size:13px;font-weight:600;padding:12px 0;color:#24573f;min-height:20px;line-height:1.5}.category-price-details summary:focus-visible,.category-price-picker select:focus-visible{outline:2px solid #286448;outline-offset:3px}
+.category-pricing .category-price-list-heading{font-size:12px;font-weight:600;margin:4px 0 10px;overflow-wrap:anywhere}
+.category-price-list{list-style:none;padding:0;margin:0 0 12px;border:1px solid #dce3dc;border-radius:10px;overflow:hidden;background:#fff}.category-price-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-bottom:1px solid #e0e5de;font-size:13px;min-width:0}.category-price-list li:last-child{border:0}.category-price-list li>div{min-width:0}.category-price-list strong{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:16px}.category-price-list .category-price-active{background:#e2edc7;box-shadow:inset 3px 0 #34694a;font-weight:700}.category-price-active small{color:#244e35}
+.category-price-subtotal{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:10px;font-size:12px}.category-price-subtotal b{white-space:nowrap;font-variant-numeric:tabular-nums}.category-pricing .category-price-footer{margin-top:8px;font-size:11px}
 .original-cart-adjust{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}.original-cart-adjust button{padding:8px 12px;border:1px solid #bacabc;border-radius:8px;background:white;color:#183c32;cursor:pointer}
-@media(max-width:600px){.category-pricing{padding:14px}.category-pricing-status{flex-direction:column}.category-pricing h3{font-size:18px}.category-pricing th,.category-pricing td{padding:10px}}
-
-/* The summary follows the category's products, not the whole catalog. */
 .category-shopping-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start;position:relative}
 .category-shopping-layout>.original-grid{grid-column:1;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
-.category-shopping-layout>.category-pricing{grid-column:2;grid-row:1;position:sticky;top:20px;margin:0;max-height:calc(100dvh - 110px);overflow-y:auto;padding:18px;box-shadow:0 5px 18px #183c3208;z-index:3}
-.category-shopping-layout .category-pricing h3{font-size:17px}.category-shopping-layout .category-pricing-explanation{font-size:12px;line-height:1.5}
-.category-shopping-layout .category-pricing-status{display:grid;gap:6px;margin:12px 0;padding:12px;font-size:13px}
-.category-current-rates{display:grid;gap:8px;margin:12px 0;max-height:24dvh;overflow-y:auto}.category-current-rates>div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:12px;line-height:1.5}.category-current-rates span{min-width:0;overflow-wrap:anywhere}.category-current-rates strong{white-space:nowrap;font-size:18px;font-variant-numeric:tabular-nums}
-.category-price-details{border-top:1px solid #dce3dc;padding-top:8px}.category-price-details summary{cursor:pointer;font-size:13px;font-weight:600;padding:8px 0;color:#24573f}.category-price-details summary:focus-visible{outline:2px solid #286448;outline-offset:3px}.category-pricing .category-price-footer{margin-top:10px;font-size:10px}
-.category-price-details .category-pricing-scroll{max-height:40dvh;overflow:auto}.category-price-details th,.category-price-details td{min-width:100px;padding:8px;font-size:12px}.category-price-details thead th{min-width:130px}
+.category-shopping-layout>.category-pricing{grid-column:2;grid-row:1;position:sticky;top:20px;margin:0;z-index:3}
+/* Expanded prices use the page scroll instead of a small nested scroll area. */
+.category-shopping-layout>.category-pricing:has(details[open]){position:static}
 @media(max-width:1000px){
  .category-shopping-layout{display:flex;flex-direction:column;gap:16px}
  .category-shopping-layout>.original-grid{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
- .category-shopping-layout>.category-pricing{width:100%;box-sizing:border-box;top:8px;max-height:55dvh;padding:10px 14px;background:#fafcf8;box-shadow:0 4px 14px #183c3215}
- .category-shopping-layout .category-pricing h3{font-size:14px;margin:0 0 4px}
- .category-shopping-layout .category-pricing-status{display:flex;flex-direction:row;justify-content:space-between;gap:5px 14px;margin:6px 0;padding:8px;font-size:12px}
- .category-shopping-layout .category-pricing-explanation,.category-shopping-layout .category-price-footer{display:none}
- .category-current-rates{margin:6px 0;max-height:12dvh}.category-current-rates strong{font-size:16px}
- .category-price-details summary{font-size:12px;padding:4px 0}.category-price-details .category-pricing-scroll{max-height:26dvh}
+ .category-shopping-layout>.category-pricing{width:100%;position:static;padding:14px}
+ .category-pricing h3{font-size:16px;margin-bottom:8px}
 }
-@media(max-width:600px){.category-shopping-layout>.original-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.category-shopping-layout>.original-grid{grid-template-columns:minmax(0,1fr)}.category-price-overview{gap:10px;padding:12px}.category-price-overview strong{font-size:20px}}
