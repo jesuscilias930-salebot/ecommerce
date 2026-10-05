@@ -14,6 +14,13 @@ const normalized = (item: Item) => `${item.name} ${item.category || ''}`.normali
 export const isShort = (item: Item) => /\bshorts?\b/.test(normalized(item));
 // These sock families are sold as three-pair sets; caricatura/económicos are not.
 export const usesTripares = (item: Item) => !isShort(item) && /deport|licra|afelp/.test(normalized(item));
+export const salePackSize = (item: Item) => usesTripares(item) ? 3 : 1;
+export const saleUnit = (item: Item) => usesTripares(item) ? 'tripar' : isShort(item) ? 'pieza' : 'par';
+export const saleUnits = (item: Item) => usesTripares(item) ? 'tripares' : isShort(item) ? 'piezas' : 'pares';
+// Rules and API quantities remain in pairs. Round each base price to cents first.
+export const saleUnitPrice = (price: number, item: Item) => Math.round(price * 100) * salePackSize(item) / 100;
+export const saleQuantityLabel = (pairs: number, item: Item) => usesTripares(item) ? `${triparesLabel(pairs)||'0 tripares'} (${pairs} pares)` : `${pairs} ${pairs===1?saleUnit(item):saleUnits(item)}`;
+export const saleTierBoundaries = (boundaries: number[], packSize: number) => [...new Set(boundaries.map(min => Math.max(1, Math.ceil(min / packSize))))].sort((a,b)=>a-b);
 export function triparesLabel(pairs: number): string {
   const sets = Math.floor(pairs / 3);
   const remainder = pairs % 3;

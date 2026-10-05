@@ -1,7 +1,7 @@
 "use client";
 import {QuantityInput} from './quantity-input';
 import "./volume-pricing.css";
-import { calculateGroups, pricingKey, pricingName, shortProduct } from "@/lib/live-pricing";
+import { calculateGroups, pricingKey, pricingName } from "@/lib/live-pricing";
 import {CategoryPricing} from './category-pricing';
 import type { Package } from "@/lib/catalog";
 import Link from "next/link";
@@ -26,6 +26,7 @@ import {PurchaseReferences} from './testimonial-gallery';
 import {cartCount} from '@/lib/bundle-selection';
 import {fixedPairsInCart} from '@/lib/price-preview';
 import {ProductViewEvent} from './product-view-event';
+import {salePackSize,saleUnit,saleUnits,saleUnitPrice,saleQuantityLabel} from '@/lib/sale-presentation';
 
 function SockVisual({ product }: { product: Original }) {
   const id = useId().replaceAll(":", "");
@@ -189,18 +190,21 @@ function OriginalCard({
 }) {
   const { lines, change } = useContext(Context);
   const quantity = lines.find((l) => l.id === -p.id)?.quantity || 0;
-  const unit = shortProduct(p) ? 'pieza' : 'par';
-  const units = shortProduct(p) ? 'piezas' : 'pares';
+  const packSize = salePackSize(p);
+  const unit = saleUnit(p);
+  const units = saleUnits(p);
   const [amount, setAmount] = useState(1);
-  const removeQuantity=Math.min(quantity,Number.isInteger(amount)&&amount>0?amount:1);
+  const pairAmount = amount * packSize;
+  const removeQuantity=Math.min(quantity,(Number.isInteger(amount)&&amount>0?amount:1)*packSize);
   const inputId = useId();
   const max = Math.max(
     0,
-    Math.min(p.currentStock - fixedPairsInCart(p.id,lines,packages), 100000 - quantity),
+    Math.floor(Math.min(p.currentStock - fixedPairsInCart(p.id,lines,packages), 100000 - quantity) / packSize),
   );
   const valid =
     !lines.some(line=>line.id>0&&!packages.some(item=>item.id===line.id)) &&
     !!p.rules.length &&
+    quantity % packSize === 0 &&
     Number.isInteger(amount) &&
     amount >= 1 &&
     amount <= max;
@@ -210,7 +214,7 @@ function OriginalCard({
   const current = group?.rows.find((l) => l.id === -p.id);
   const proposed = calculateGroups(products, [
     ...lines.filter((l) => l.id !== -p.id),
-    { id: -p.id, quantity: quantity + (valid ? amount : 0) },
+    { id: -p.id, quantity: quantity + (valid ? pairAmount : 0) },
   ], packages).find((g) => g.key === pricingKey(p));
   const proposedRow = proposed?.rows.find((l) => l.id === -p.id);
   return (
@@ -218,8 +222,8 @@ function OriginalCard({
       <div className="original-visual">
         <span className="original-watermark">MERLYN / ORIGINALES</span>
         <StorePhoto images={p.imageUrls} src={p.imageUrl} name={p.name}><SockVisual product={p} /></StorePhoto>
-        <span className={`original-stock ${p.currentStock ? "" : "sold-out"}`}>
-          {p.currentStock ? `${p.currentStock} disponibles` : "Agotado"}
+        <span className={`original-stock ${Math.floor(p.currentStock/packSize) ? "" : "sold-out"}`}>
+          {Math.floor(p.currentStock/packSize) ? `${Math.floor(p.currentStock/packSize)} ${units} disponibles` : "Agotado"}
         </span>
         {!p.imageUrl&&!p.imageUrls?.length&&<small>Ilustración de referencia</small>}
       </div>
@@ -233,12 +237,13 @@ function OriginalCard({
             Grupo {pricingName(p)}
           </span>
           <h2>{p.name}</h2>
+          {packSize===3&&<p><strong>1 tripar = 3 pares</strong> · Se vende en juegos de 3 pares.</p>}
         </div>
         <div className="original-price">
           {valid&&proposedRow?.price!=null ? (
             <>
               <small>Tu precio al agregar</small>
-              <strong>{money(proposedRow.price)}</strong>
+              <strong>{money(saleUnitPrice(proposedRow.price,p))}</strong>
               <small>MXN / {unit}</small>
             </>
           ) : (
@@ -249,14 +254,14 @@ function OriginalCard({
 
           {valid && proposedRow?.price != null ? (
             <>
-              <b>{amount} {amount===1?unit:units} por agregar · Subtotal {money(Math.round(proposedRow.price*100)*amount/100)}</b><small>IVA incluido · Envío aparte. Vista previa con tu carrito; verificamos antes de pagar.</small>
+              <b>{saleQuantityLabel(pairAmount,p)} por agregar · Subtotal {money(Math.round(proposedRow.price*100)*pairAmount/100)}</b><small>IVA incluido · Envío aparte. Vista previa con tu carrito; verificamos antes de pagar.</small>
             </>
           ) : (
             <p>Ingresa una cantidad disponible para calcular.</p>
           )}
           {current?.price != null && (
             <small>
-              En el carrito: {quantity} {units} × {money(current.price)} = {money((quantity * current.price))}
+              En el carrito: {saleQuantityLabel(quantity,p)} · Total {money(Math.round(current.price*100)*quantity/100)}
             </small>
           )}
         </div>
@@ -293,13 +298,14 @@ function OriginalCard({
               </button>
             </div>
           </div>
-          {quantity>0&&<div className="original-cart-adjust"><span>{quantity} {units} en el carrito</span><button type="button" aria-label={`Quitar ${removeQuantity} ${removeQuantity===1?unit:units} de ${p.name} del carrito`} onClick={()=>change(-p.id,quantity-removeQuantity)}>Quitar {removeQuantity}</button><button type="button" onClick={()=>change(-p.id,0)} aria-label={`Quitar todos los ${p.name} individuales del carrito`}>Quitar todos</button></div>}
+          {quantity>0&&<div className="original-cart-adjust"><span>{saleQuantityLabel(quantity,p)} en el carrito</span><button type="button" aria-label={`Quitar ${saleQuantityLabel(removeQuantity,p)} de ${p.name} del carrito`} onClick={()=>change(-p.id,quantity-removeQuantity)}>Quitar {saleQuantityLabel(removeQuantity,p)}</button><button type="button" onClick={()=>change(-p.id,0)} aria-label={`Quitar todos los ${p.name} individuales del carrito`}>Quitar todos</button></div>}
+          {quantity%packSize!==0&&<p role="alert">Este artículo de tu carrito anterior tiene pares sueltos. Quítalo y agrégalo de nuevo en tripares completos.</p>}
           <button
             className="original-add"
             disabled={!valid||proposedRow?.price==null}
-            onClick={() => change(-p.id, quantity + amount)}
+            onClick={() => change(-p.id, quantity + pairAmount)}
           >
-            {p.currentStock ? "Agregar a mi carrito" : "Sin disponibilidad"}
+            {Math.floor(p.currentStock/packSize) ? "Agregar a mi carrito" : "Sin disponibilidad"}
             <ArrowUpRight size={17} />
           </button>
           {!valid&&<p role="status">{max<1?'Sin existencias adicionales para agregar.':`Escribe entre 1 y ${max} ${units}.`}</p>}

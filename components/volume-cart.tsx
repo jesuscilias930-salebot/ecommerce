@@ -14,7 +14,8 @@ import type { Original } from "@/lib/product-catalog";
 import { pricingKey, pricingName } from "@/lib/live-pricing";
 import { money } from "@/lib/money";
 import {cartDisplayName} from '@/lib/cart-display-name';
-import {isShort,usesTripares,triparesLabel} from '@/lib/sale-presentation';
+import {isShort,usesTripares,triparesLabel,salePackSize,saleUnit,saleUnits,saleUnitPrice,saleQuantityLabel} from '@/lib/sale-presentation';
+import {fixedPairsInCart} from '@/lib/price-preview';
 import "./order-cart.css";
 import "./order-receipt.css";
 export function VolumeCart({
@@ -73,10 +74,15 @@ export function VolumeCart({
   const valid = lines.length > 0 && !!quote && !error;
   const total = valid ? Number(quote!.subtotal) : null;
   const demoOrder = !!quote?.demo || (demo && boxes.length > 0);
-  const blockedReason=error?'Reintenta la carga del catálogo para verificar existencias antes de continuar.':demoOrder?'Modo demostración: los productos ficticios no generan mensajes de compra.':!valid?'Agrega productos y espera una cotización válida para continuar.':undefined;
-  const quantityControl = (id: number, quantity: number, max: number|null) => (
-    <CartQuantity quantity={quantity} max={max} unit={id<0?"unidades":"cajas"} name={(id<0?selected.find(l=>l.id===id)?.name:boxes.find(l=>l.id===id)?.item?.name)||"Artículo no disponible"} onChange={n=>change(id,n)}/>
-  );
+  const incompleteTripares=selected.some(l=>l.product&&l.quantity%salePackSize(l.product)!==0);
+  const blockedReason=error?'Reintenta la carga del catálogo para verificar existencias antes de continuar.':incompleteTripares?'Ajusta los artículos con pares sueltos: deportivos y licra se venden en tripares de 3 pares.':demoOrder?'Modo demostración: los productos ficticios no generan mensajes de compra.':!valid?'Agrega productos y espera una cotización válida para continuar.':undefined;
+  const quantityControl = (id: number, quantity: number, max: number|null) => {
+    const product=selected.find(l=>l.id===id)?.product;
+    const size=product?salePackSize(product):1;
+    if(quantity%size!==0)return <div className="order-notice" role="alert"><p>Tienes {quantity} pares de este artículo. Ahora se vende en tripares de 3 pares. Elimínalo y agrégalo de nuevo con la cantidad de tripares que necesitas.</p><button type="button" onClick={()=>change(id,0)}>Eliminar para ajustar</button></div>;
+    return <CartQuantity quantity={quantity/size} max={max===null?null:Math.floor(Math.min(max,100000)/size)} unit={id>0?'cajas':product?saleUnits(product):'unidades'} name={(id<0?selected.find(l=>l.id===id)?.name:boxes.find(l=>l.id===id)?.item?.name)||"Artículo no disponible"} onChange={n=>change(id,n*size)}/>;
+  };
+  const groupQuantityLabel=(g:typeof groups[number])=>g.members.every(l=>l.product&&usesTripares(l.product))?`${triparesLabel(g.quantity)} (${g.quantity} pares)`:`${g.quantity} unidades`;
   return (
     <div className="cart-layout order-cart">
       <section className="order-main" aria-label={addressPage ? "Dirección y envío" : "Artículos del carrito"}>
@@ -90,16 +96,16 @@ export function VolumeCart({
         {!addressPage && boxes.map(l => <CartBundle key={cartLineKey(l)} id={l.id} quantity={l.quantity} selection={l.selection} item={l.item} quote={l.q} availabilityUnknown={!!error} onChange={quantity => change(l.id, quantity,l.selection)}/>)}
         {!addressPage && groups.length > 0 && <div className="cart-section-heading"><h2>Tus productos individuales</h2><p>Estos artículos se agregaron por separado y no forman parte de los paquetes de arriba.</p></div>}
         {!addressPage && groups.map(g => <article className="order-group" key={g.key}>
-          <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{g.quantity} unidades</span></header>
+          <header><div><span className="order-kind">Productos individuales</span><h2>{g.name}</h2></div><span className="order-badge">{groupQuantityLabel(g)}</span></header>
           {g.members.map(l => <div className="order-product" key={l.id}>
             <div className="order-item-top">
               <div className="order-thumb">{l.product?.imageUrl ? <img src={l.product.imageUrl} alt="" /> : <span aria-hidden="true">◈</span>}</div>
-              <div className="order-item-info"><h3>{l.name}</h3><p>{l.q ? money(Number(l.q.unitPrice)) : "Calculando…"} / par</p></div>
+              <div className="order-item-info"><h3>{l.name}</h3><p>{l.q ? money(saleUnitPrice(Number(l.q.unitPrice),l.product||{name:l.name})) : "Calculando…"} / {saleUnit(l.product||{name:l.name})}</p>{l.product&&usesTripares(l.product)&&<small>1 tripar = 3 pares · {saleQuantityLabel(l.quantity,l.product)}</small>}</div>
               <strong className="order-item-price">{l.q ? money(Number(l.q.subtotal)) : "—"}</strong>
             </div>
-            {quantityControl(l.id, l.quantity, error?null:l.product?.currentStock ?? 0)}
+            {quantityControl(l.id, l.quantity, error?null:l.product?Math.max(0,l.product.currentStock-fixedPairsInCart(l.product.id,lines,items)+l.quantity):0)}
           </div>)}
-          <div className="order-group-total"><span>Individuales de este grupo · {g.quantity} unidades</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
+          <div className="order-group-total"><span>Individuales de este grupo · {groupQuantityLabel(g)}</span><b>{g.total === null ? "Calculando…" : money(g.total)}</b></div>
         </article>)}
         {showAddress && lines.length > 0 && <CartShipping key={shippingKey} cartKey={shippingKey} blocked={blockedReason} onSelect={estimate => setShipping({key: shippingKey, estimate})}/>}
       </section>
@@ -116,7 +122,7 @@ export function VolumeCart({
             })}</ul><small>Incluido en el importe del paquete; no es un cargo adicional.</small></div>}
           </li>)}{selected.map(l=><li className="receipt-line" key={l.id}>
             <div className="receipt-line-heading"><strong>{l.name}</strong><b>{valid&&l.q?money(Number(l.q.subtotal)):'—'}</b></div>
-            <small>{l.quantity} {isShort(l.product||{name:l.name})?'piezas':'pares'} × {valid&&l.q?money(Number(l.q.unitPrice)):'Por verificar'} · Individuales</small>
+            <small>{saleQuantityLabel(l.quantity,l.product||{name:l.name})}{l.quantity%salePackSize(l.product||{name:l.name})===0?<> × {valid&&l.q?money(saleUnitPrice(Number(l.q.unitPrice),l.product||{name:l.name})):'Por verificar'} por {saleUnit(l.product||{name:l.name})}</>:' · Ajusta a tripares completos'} · Individuales</small>
           </li>)}</ul>
         </section>
         <div><span>Envío</span><span>{addressPage ? estimate ? money(estimate.price) : "Elige una tarifa" : "En el siguiente paso"}</span></div>

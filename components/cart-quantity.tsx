@@ -3,7 +3,7 @@ import { useId, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import styles from "./cart-quantity.module.css";
 
-export function CartQuantity({name,quantity,max,unit,onChange}:{name:string;quantity:number;max:number|null;unit:"pares"|"cajas"|"unidades";onChange:(quantity:number)=>void}) {
+export function CartQuantity({name,quantity,max,unit,onChange}:{name:string;quantity:number;max:number|null;unit:"pares"|"cajas"|"unidades"|"tripares"|"piezas";onChange:(quantity:number)=>void}) {
   const id=useId();
   const [draft,setDraft]=useState<string|null>(null);
   const [error,setError]=useState("");
