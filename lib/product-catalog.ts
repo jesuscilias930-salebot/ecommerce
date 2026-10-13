@@ -6,7 +6,7 @@ import { getStoreTenant } from './store-tenant';
 import { pricingKey } from './live-pricing';
 import {verifiedProductDetails,type ProductDetails} from './product-details';
 export type Tier={minQuantity:number;maxQuantity:number|null;pricePerUnit:number|string};
-export type Original = {details?:ProductDetails;imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
+export type Original = {composition?:string[];details?:ProductDetails;imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
 export const isProductDemo=()=>process.env.STOREFRONT_PRODUCTS_MOCK==='true'||!process.env.SOCK_CONTROL_URL;
 const tiers=(price:number):Tier[]=>[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:99,pricePerUnit:price-2},{minQuantity:100,maxQuantity:null,pricePerUnit:price-4}];
 const mockProducts:Original[]=[

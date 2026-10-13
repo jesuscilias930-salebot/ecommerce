@@ -2,12 +2,12 @@
 
 Rutas: /privacidad, /terminos, /envios-y-devoluciones y /cookies. Enlaces en footer, Checkout, formulario de destino y banner de cookies. Las páginas están marcadas noindex mientras el contenido esté pendiente; siguen siendo accesibles.
 
-Datos autorizados el 24/09/2026: Jesús Merlyn Cilias Arellano; jesuscilias930@gmail.com; contacto de atención previamente autorizado +52 272 128 5563. El titular no autorizó publicar domicilio: no se tomó ninguna dirección privada de otras fuentes.
+Datos autorizados el 24/09/2026: Jesús Merlyn Cilias Arellano; jesuscilias930@gmail.com; contacto de atención previamente autorizado +52 272 128 5563. El 13/10/2026 autorizó publicar: Privada Palmira sobre avenida de los Censos, Orizaba, Veracruz. No se tomaron direcciones privadas de otras fuentes ni se inventaron número o código postal.
 
 ## Pendientes antes de considerar los textos definitivos
 
-- Domicilio del responsable: obligatorio según art. 15 LFPDPPP. Configurar solo el domicilio comercial autorizado en lib/legal.ts. No se afirma cumplimiento integral sin este dato.
-- Confirmar plazos de preparación y condiciones operativas de atención de devoluciones/reembolsos: plazo de reclamación comercial, canal de retorno, quién cubre los costos y plazos del reembolso. No se inventaron esos valores.
+- Domicilio autorizado publicado en lib/legal.ts. Su publicación retira automáticamente el aviso de domicilio pendiente; no constituye una certificación de cumplimiento integral ni una revisión legal de su suficiencia.
+- Preparación de dos días hábiles y plazo comercial de reporte de tres días hábiles ya confirmados. Compensación autorizada: nuevas unidades en el siguiente envío o devolución del costo de esas unidades a la tarjeta. Sigue pendiente confirmar un plazo específico de reembolso; no se inventó.
 - Política comercial autorizada: cancelación antes de entregar a paquetería; devoluciones por defectos de fábrica. Se preservan expresamente los derechos legales aplicables, sin imponer una renuncia absoluta ni condicionar derechos legales a fotografías.
 - Formalizar retención de pedidos/logs y eliminación de atribución publicitaria tras intentos fallidos.
 - Revisión legal de textos y tratamiento efectivo con proveedores. No es certificación de cumplimiento.

@@ -267,6 +267,7 @@ function OriginalCard({
         </div>
         <details className="original-tiers"><summary>Ver detalles del producto</summary>
           <dl><dt>Talla del producto</dt><dd>{p.details?.sizeRange||p.size||'Rango pendiente de confirmar; consulta antes de comprar.'}</dd>{p.details?.material&&<><dt>Material</dt><dd>{p.details.material}</dd></>}{p.details?.height&&<><dt>Altura</dt><dd>{p.details.height}</dd></>}</dl>
+          {!!p.composition?.length&&<div className="original-composition"><strong>Composición</strong><ul>{p.composition.map((component,index)=><li key={index}>{component}</li>)}</ul></div>}
         {p.details?.assortment&&<p>{p.details.assortment}</p>}
         </details>
         <div className="original-purchase">
