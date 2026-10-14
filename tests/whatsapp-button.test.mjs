@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {normalizeStoreFeatures,storeWhatsappHref} from '../lib/store-feature-values.ts';
 import {readStoreFeatures} from '../lib/meta-feature.mjs';
+test('floating button uses a local WhatsApp logo without changing its accessible label',()=>{
+ const source=readFileSync(new URL('../components/floating-whatsapp.tsx',import.meta.url),'utf8');
+ assert.match(source,/<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">/);
+ assert.match(source,/<span>Comprar por WhatsApp<\/span>/);
+ assert.doesNotMatch(source,/MessageCircle|<img|<script/);
+});
 test('WhatsApp is hidden for old servers, invalid values, and disabled configuration',()=>{
  for(const data of [null,{}, {whatsappButtonEnabled:true}, {whatsappButtonEnabled:'true',whatsappNumber:'522721285563'}, {whatsappButtonEnabled:false,whatsappNumber:'522721285563'}, ...['https://evil.test','0123456789','123','1'.repeat(16)].map(whatsappNumber=>({whatsappButtonEnabled:true,whatsappNumber}))]){
   const safe=normalizeStoreFeatures(data);
