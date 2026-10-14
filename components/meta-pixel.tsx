@@ -4,7 +4,9 @@ import {useEffect,useRef,useState} from 'react';
 import {usePathname} from 'next/navigation';
 import styles from './meta-pixel.module.css';
 import {MARKETING_CONSENT_KEY} from '@/lib/meta-attribution';
-import {readMetaFeature} from '@/lib/meta-feature.mjs';
+import {readStoreFeatures} from '@/lib/meta-feature.mjs';
+import {normalizeStoreFeatures} from '@/lib/store-feature-values';
+import {FloatingWhatsapp} from './floating-whatsapp';
 import Link from 'next/link';
 
 const PIXEL_ID='2294997607982799';
@@ -30,11 +32,12 @@ function loadPixel(){
 
 export function MetaPixel(){
  const pathname=usePathname();
- const [feature,setFeature]=useState({path:'',enabled:false});
- const metaEnabled=feature.path===pathname&&feature.enabled;
+ const [feature,setFeature]=useState({path:'',settings:normalizeStoreFeatures(null)});
+ const currentFeatures=feature.path===pathname?feature.settings:normalizeStoreFeatures(null);
+ const metaEnabled=currentFeatures.metaEventsEnabled;
  useEffect(()=>{
   let cancelled=false;
-  const refresh=async()=>{const enabled=await readMetaFeature();if(!cancelled)setFeature({path:pathname,enabled});};
+  const refresh=async()=>{const settings=await readStoreFeatures();if(!cancelled)setFeature({path:pathname,settings});};
   void refresh();const timer=setInterval(()=>void refresh(),15000);
   window.addEventListener('focus',refresh);
   return()=>{cancelled=true;clearInterval(timer);window.removeEventListener('focus',refresh);};
@@ -75,6 +78,7 @@ export function MetaPixel(){
   setConsent(value);setEditing(false);
  }
  return <>
+  <FloatingWhatsapp features={feature.settings}/>
   <button type="button" className={styles.settings} onClick={()=>setEditing(true)}>Preferencias de cookies</button>
   {ready&&(consent===null||editing)&&<section className={styles.banner} aria-label="Cookies publicitarias">
    <div><strong>Tú decides sobre las cookies publicitarias</strong><p>Con tu permiso compartimos con Meta visitas, acciones de compra y compras confirmadas, productos e importes, identificadores publicitarios y tipo de navegador para medir anuncios. Las acciones incluyen configurar cajas, carrito, envío y continuar por WhatsApp; un pedido pendiente no es una compra pagada. No compartimos datos de tarjeta, dirección, correo ni teléfono. Puedes rechazarlo y comprar normalmente o cambiar tu elección en Preferencias de cookies antes de iniciar el pago.</p><a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener noreferrer">Política de privacidad de Meta</a></div>

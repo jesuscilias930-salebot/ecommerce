@@ -1,10 +1,11 @@
 import 'server-only';
 import {stockApi} from './product-catalog';
+import {normalizeStoreFeatures,type StoreFeatures} from './store-feature-values';
 
-// Fail closed: WhatsApp remains available if the feature bridge is unavailable.
-export async function getStoreFeatures():Promise<{cardPaymentsEnabled:boolean;metaEventsEnabled:boolean}> {
+// Fail closed for optional features. The existing WhatsApp checkout is unaffected.
+export async function getStoreFeatures():Promise<StoreFeatures> {
  try {
   const data=await stockApi('/public/store/features');
-  return {cardPaymentsEnabled:data.cardPaymentsEnabled===true,metaEventsEnabled:data.metaEventsEnabled===true};
- } catch {return {cardPaymentsEnabled:false,metaEventsEnabled:false};}
+  return normalizeStoreFeatures(data);
+ } catch {return normalizeStoreFeatures(null);}
 }
