@@ -1,0 +1,19 @@
+.root{display:grid;grid-template-columns:minmax(180px,1.1fr) minmax(130px,.8fr) minmax(155px,1fr) minmax(210px,1.2fr);align-items:start;gap:32px;padding:48px 6% 28px;background:#183c32;color:#fff;}
+.root .brandBlock{display:flex;flex-direction:column;align-items:flex-start;gap:22px;margin:0;}
+.root .brandBlock :global(.brand){display:block;}
+.brandBlock p{font-family:Georgia,serif;font-size:18px;line-height:1.5;color:#d6e4db;}
+.navigation,.social{min-width:0;}
+.navigation{display:grid;gap:4px;align-content:start;}
+.root h2{margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;letter-spacing:.02em;line-height:1.4;}
+.navigation a{display:flex;align-items:center;min-height:36px;font-size:13px;line-height:1.5;color:#e1ece5;text-underline-offset:4px;}
+.navigation a:hover{text-decoration:underline;}
+.social p{font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#d6e4db;}
+.social ul{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:16px 0 12px;}
+.social li{margin:0;}
+.social a{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:10px 12px;border:1px solid #ffffff40;border-radius:10px;background:#ffffff08;color:#fff;font-size:13px;font-weight:500;line-height:1.4;text-decoration:none;}
+.social a:hover{background:#ffffff17;border-color:#dce8a0;}
+.social small{display:block;font-size:11px;line-height:1.6;color:#c2d4c8;}
+.root a:focus-visible{outline:3px solid #dce8a0;outline-offset:4px;}
+.root .copyright{grid-column:1/-1;width:100%;border-top:1px solid #ffffff25;margin-top:4px;padding-top:22px;font-size:11px;line-height:1.6;color:#c2d4c8;}
+@media(max-width:1000px){.root{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 24px;}}
+@media(max-width:600px){.root{padding:36px 5% 24px;gap:28px 18px;}.root .brandBlock,.social{grid-column:1/-1;}.root .brandBlock{gap:18px;}.brandBlock p{font-size:17px;}.root h2{margin-bottom:10px;}.navigation a{min-height:44px;font-size:13px;}.social ul{gap:8px;}.social a{padding-inline:11px;}}
