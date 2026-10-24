@@ -5,8 +5,9 @@ import { productDisplayName } from './product-name';
 import { getStoreTenant } from './store-tenant';
 import { pricingKey } from './live-pricing';
 import {verifiedProductDetails,type ProductDetails} from './product-details';
+import {getCatalogDetails} from './catalog-details';
 export type Tier={minQuantity:number;maxQuantity:number|null;pricePerUnit:number|string};
-export type Original = {composition?:string[];details?:ProductDetails;imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
+export type Original = {composition?:string[];details?:ProductDetails;color?:string|null;model?:string|null;imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
 export const isProductDemo=()=>process.env.STOREFRONT_PRODUCTS_MOCK==='true'||!process.env.SOCK_CONTROL_URL;
 const tiers=(price:number):Tier[]=>[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:99,pricePerUnit:price-2},{minQuantity:100,maxQuantity:null,pricePerUnit:price-4}];
 const mockProducts:Original[]=[
@@ -16,6 +17,10 @@ const mockProducts:Original[]=[
  {id:900000004,name:'Calcetín deportivo negro',gender:'Unisex',size:'Unitalla',category:'Deportivo',categoryId:2,pricingGroup:'deportivo',currentStock:250,rules:tiers(18)},
  {id:900000005,name:'Calcetín térmico',gender:'Unisex',size:'Unitalla',category:'Térmico',categoryId:3,pricingGroup:'termico',currentStock:150,rules:tiers(28)},
  {id:900000006,name:'Calcetín infantil surtido',gender:'Infantil',size:'18–21',category:'Infantil',categoryId:4,pricingGroup:'infantil',currentStock:0,rules:tiers(16)},
+ {id:900000007,name:'Essential High Quality',model:'Essential High Quality',color:'Negro',gender:'Hombre',size:'25–28',category:'Essentials',categoryId:5,pricingGroup:'essentials',currentStock:120,rules:tiers(24)},
+ {id:900000008,name:'Essential High Quality',model:'Essential High Quality',color:'Blanco',gender:'Hombre',size:'25–28',category:'Essentials',categoryId:5,pricingGroup:'essentials',currentStock:0,rules:tiers(24)},
+ {id:900000009,name:'Essential High Quality',model:'Essential High Quality',color:'Blanco',gender:'Mujer',size:'22–25',category:'Essentials',categoryId:5,pricingGroup:'essentials',currentStock:60,rules:tiers(24)},
+ {id:900000010,name:'Essential High Quality',model:'Essential High Quality',color:'Gris',gender:'Mujer',size:'22–25',category:'Essentials',categoryId:5,pricingGroup:'essentials',currentStock:35,rules:tiers(24)},
 ];
 function mockQuote(body:unknown) {
  const quantities=new Map<number,number>();
@@ -45,9 +50,11 @@ export async function stockApi(path:string, body?:unknown) {
  if(!response.ok) throw new Error('No se pudo validar el precio. Revisa stock y reglas de precios en sock-control.');
  return response.json();
 }
+/** El color forma parte del nombre en carrito y pedido («… CABALLERO NEGRO»). */
+const withColor=(name:string,color?:string|null)=>{const value=(color||'').trim().toLocaleUpperCase('es-MX');return value&&!(` ${name} `).includes(` ${value} `)?`${name} ${value}`:name;};
 export async function getOriginals():Promise<Original[]> {
  await getStoreTenant();
- if(isProductDemo())return mockProducts.map(p=>({...p,name:productDisplayName(p)}));
- const [products,rules]:[Original[],Record<string,Tier[]>]=await Promise.all([stockApi('/public/store/products/in-stock'),stockApi('/public/store/price-rules')]);
- return products.map(p=>({...p,details:verifiedProductDetails[p.id],imageUrls:[...(p.imageUrls||[]),...(verifiedProductDetails[p.id]?.photos?.map(photo=>photo.url)||[])],name:productDisplayName(p),rules:(rules[String(p.id)]||[]).filter(r=>r.minQuantity>0&&Number.isFinite(Number(r.pricePerUnit))).sort((a,b)=>a.minQuantity-b.minQuantity)}));
+ if(isProductDemo())return mockProducts.map(p=>({...p,name:withColor(productDisplayName(p),p.color)}));
+ const [products,rules,crm]:[Original[],Record<string,Tier[]>,Awaited<ReturnType<typeof getCatalogDetails>>]=await Promise.all([stockApi('/public/store/products/in-stock'),stockApi('/public/store/price-rules'),getCatalogDetails()]);
+ return products.map(raw=>({...raw,...crm.get(raw.id)})).map(p=>({...p,details:verifiedProductDetails[p.id],imageUrls:[...(p.imageUrls||[]),...(verifiedProductDetails[p.id]?.photos?.map(photo=>photo.url)||[])],name:withColor(productDisplayName(p),p.color),rules:(rules[String(p.id)]||[]).filter(r=>r.minQuantity>0&&Number.isFinite(Number(r.pricePerUnit))).sort((a,b)=>a.minQuantity-b.minQuantity)}));
 }
