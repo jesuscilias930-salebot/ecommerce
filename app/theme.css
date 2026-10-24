@@ -1,0 +1,66 @@
+/* Tema inspirado en el catálogo de referencia: fondo blanco, acento amarillo cálido,
+   texto gris oscuro y tarjetas con borde suave. Se carga al final para unificar estilos. */
+body{background:var(--paper);color:var(--ink);font-family:"Helvetica Neue",Arial,Helvetica,sans-serif}
+body h1,body h2{font-weight:700;letter-spacing:-.035em}
+body .eyebrow{color:var(--muted);letter-spacing:1.4px}
+body .announcement{background:var(--slate)}
+body .announcement span{color:var(--accent)}
+
+/* Encabezado */
+body .site-header{position:sticky;top:0;z-index:30;background:#fffffff2;backdrop-filter:blur(8px);height:78px}
+body .site-header nav{gap:6px}
+body .site-header nav a{padding:9px 14px;border-radius:999px;font-weight:500;transition:background .15s}
+body .site-header nav a:hover{border-bottom:0;background:var(--surface)}
+body .bag{padding:9px 14px;border:1px solid var(--line);border-radius:999px;font-weight:600;transition:border-color .15s,background .15s}
+body .bag:hover{border-color:#9ca3af;background:var(--surface)}
+body .bag b{background:var(--accent);color:var(--ink);min-width:24px;text-align:center}
+body .demo{background:var(--accent-soft);color:#6b5310;border-radius:10px}
+body p.demo{margin-bottom:22px}
+
+/* Botones */
+body .primary{border-radius:10px;font-weight:700;color:var(--ink);background:var(--accent);transition:background .15s,transform .1s}
+body .primary:hover:not(:disabled){background:var(--accent-strong)}
+body .primary:active:not(:disabled){transform:translateY(1px)}
+body .bundle-purchase-actions>.buy-now{background:#fff;border:1px solid var(--line)}
+body .bundle-purchase-actions>.buy-now:hover:not(:disabled){background:var(--surface);border-color:#9ca3af}
+body .section-heading>a{padding:10px 16px;border:1px solid var(--line);border-radius:999px;font-weight:600;transition:border-color .15s}
+body .section-heading>a:hover{border-color:#9ca3af}
+
+/* Inicio */
+body .hero-art{background:var(--accent-soft)}
+body .benefits{background:var(--surface);border-color:transparent}
+body .benefits>span{font-weight:600}
+body .benefits svg{color:#b8860b}
+body .how{background:var(--surface);border-radius:20px}
+body .faq details{padding:18px 4px}
+body .faq summary{font-weight:600}
+body .faq summary span{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--surface)}
+
+/* Catálogo de paquetes */
+body .chips button{background:#fff;min-height:40px;font-weight:500;transition:border-color .15s,background .15s}
+body .chips button:hover{border-color:#9ca3af}
+body .chips button.active{background:var(--accent);border-color:var(--accent);color:var(--ink);font-weight:700}
+body .search,body .search-sort select{border-radius:999px}
+body .product-card{display:flex;flex-direction:column;padding:10px;border:1px solid var(--line);border-radius:16px;background:#fff;transition:box-shadow .2s,border-color .2s}
+body .product-card:hover{border-color:#d1d5db;box-shadow:0 10px 28px #1f293314}
+body .product-card .product-visual{border-radius:12px}
+body .product-card .product-info{display:flex;flex-direction:column;flex:1;padding:16px 6px 6px}
+body .product-card .product-info>.bundle-purchase-actions{margin-top:auto;padding-top:16px}
+body .product-card .price-row{margin-top:8px}
+body .product-card .price-row span{padding:4px 10px;border-radius:999px;background:var(--surface);font-size:11px;font-weight:600;color:var(--muted)}
+body .round-arrow{box-shadow:0 2px 8px #1f29331f}
+
+/* Carrito y pedido */
+body .order-summary{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px #1f29330d}
+body .cart-line .box-art{border-radius:10px}
+body .quantity{border-radius:999px;padding:0 6px}
+body .floating-cart{background:var(--slate);color:#fff}
+body .floating-cart b{background:var(--accent);color:var(--ink)}
+body .empty{border:1px dashed var(--line);border-radius:16px;margin-top:10px}
+
+@media(max-width:650px){
+ body .site-header{height:auto}
+ body .product-card{padding:8px;border-radius:14px}
+ body .product-card .product-info{padding:12px 4px 4px}
+ body .how{border-radius:0}
+}
