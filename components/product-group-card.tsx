@@ -69,7 +69,13 @@ export function ProductGroupCard({group,products,packages=[]}:{group:ProductGrou
  const proposed=calculateGroups(products,[...lines.filter(line=>line.id!==-p.id),{id:-p.id,quantity:quantity+(valid?pairAmount:0)}],packages).find(entry=>entry.key===pricingKey(p));
  const proposedRow=proposed?.rows.find(row=>row.id===-p.id);
  const currentRow=current?.rows.find(row=>row.id===-p.id);
- const photoSource=p.imageUrl||p.imageUrls?.length?p:group.products.find(product=>product.imageUrl||product.imageUrls?.length)||p;
+ // Las tallas del mismo producto (mismo nombre, género y color) comparten fotos:
+ // primero las propias, luego las de su misma presentación, luego del mismo color.
+ const hasPhotos=(product:Original)=>Boolean(product.imageUrl||product.imageUrls?.length);
+ const photoSource=hasPhotos(p)?p
+  :group.products.find(product=>hasPhotos(product)&&product.name===p.name&&product.gender===p.gender&&productColor(product)===productColor(p))
+  ||group.products.find(product=>hasPhotos(product)&&productColor(product)===productColor(p))
+  ||group.products.find(hasPhotos)||p;
  const inGroup=group.products.filter(product=>lines.some(line=>line.id===-product.id));
  const combined=pricingKey(p).startsWith('category:')||pricingKey(p).startsWith('group:');
  return <article className={styles.card} aria-labelledby={`${inputId}-title`}>
