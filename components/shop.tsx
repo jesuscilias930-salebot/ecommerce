@@ -142,8 +142,8 @@ export function Header() {
           {menuOpen ? <X size={22} /> : <Menu size={22} />} Menú
         </button>
         <nav id="store-navigation" className={menuOpen ? "is-open" : ""} aria-label="Navegación principal" onClick={() => setMenuOpen(false)}>
-          <Link href="/paquetes">Paquetes de mayoreo</Link>
-          <Link href="/productos">Arma tu pedido</Link>
+          <Link href="/paquetes">Paquetes emprendedores</Link>
+          <Link href="/productos">Productos</Link>
           <Link href="/#preguntas">Preguntas frecuentes</Link>
         </nav>
         <Link className="bag" href="/carrito" aria-label={`Ver carrito, ${cartCount(lines)} cajas y productos`} onClick={() => setMenuOpen(false)}>

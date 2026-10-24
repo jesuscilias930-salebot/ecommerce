@@ -16,7 +16,7 @@ export default async function Home(){
   <section className="hero">
    <div className="hero-copy">
     <span className="eyebrow">MAYOREO PARA EMPRENDER Y RESURTIR</span>
-    <h1>Calcetines al mayoreo para <em>emprender y resurtir tu negocio.</em></h1>
+    <h1>Productos al mayoreo para <em>emprender y resurtir tu negocio.</em></h1>
     <p>Elige un paquete listo o compra por producto. Consulta el contenido, ajusta las cantidades y compra sin registrarte.</p>
     {starting&&<p className="hero-starting"><Link href={`/paquetes/${starting.id}`}>{starting.name} · {packageQuantityLabel(starting)}<strong>{money(starting.price)} MXN</strong></Link><small>{starting.pieces>0?`${money(starting.price/starting.pieces)} por ${starting.items.every(i=>!isShort(i))?'par':'unidad'} en promedio · `:''}IVA incluido · Envío aparte.</small></p>}
     <div className="hero-actions"><Link className="primary" href="/paquetes">Ver paquetes <ArrowUpRight size={20}/></Link><Link href="/productos">Comprar por producto →</Link></div>
