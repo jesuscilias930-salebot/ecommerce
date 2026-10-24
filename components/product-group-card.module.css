@@ -46,3 +46,7 @@
 .inCart button{background:transparent;color:#a33838;font-weight:600;font-size:12px;padding:4px}
 @media(max-width:1150px){.card{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.buy{grid-column:1/-1}}
 @media(max-width:700px){.card{grid-template-columns:1fr;padding:14px;gap:16px}.media,.media svg{min-height:240px}.info h2{font-size:21px!important}.option{min-height:44px}}
+.colorSummary{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:#6c7770;margin-top:-6px}
+.colorSummary span{font-weight:600;color:#183c32}
+.colorSummary small{flex-basis:100%;font-size:12px}
+.swatchOut{opacity:.35}

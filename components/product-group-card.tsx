@@ -13,7 +13,7 @@ import {fixedPairsInCart} from '@/lib/price-preview';
 import {money} from '@/lib/money';
 import {colorSwatch} from '@/lib/color-swatch';
 import {salePackSize,saleUnit,saleUnits,saleUnitPrice,saleQuantityLabel} from '@/lib/sale-presentation';
-import {DIMENSION_LABELS,genderLabel,optionsFor,reconcile,resolveVariant,type Choice,type Dimension,type ProductGroup} from '@/lib/product-groups';
+import {DIMENSION_LABELS,genderLabel,groupColors,optionsFor,productColor,reconcile,resolveVariant,type Choice,type Dimension,type ProductGroup} from '@/lib/product-groups';
 import styles from './product-group-card.module.css';
 
 /** Tabla de precios por cantidad del producto elegido; marca la tarifa con lo que ya llevas. */
@@ -81,7 +81,12 @@ export function ProductGroupCard({group,products,packages=[]}:{group:ProductGrou
    <ProductViewEvent id={p.id} kind="product"/>
    <p className={styles.kicker}>{group.byModel?group.category:`${group.products.length} ${group.products.length===1?'opción':'opciones'}`}</p>
    <h2 id={`${inputId}-title`}>{group.title}</h2>
-   <p className={styles.variantName}>{[genderLabel(p.gender),p.color,p.details?.sizeRange||p.size&&`Talla ${p.details?.sizeRange||p.size}`].filter(Boolean).join(' · ')||p.name}</p>
+   {(()=>{const colors=groupColors(group);return colors.length>0&&<p className={styles.colorSummary} aria-label={`Colores: ${colors.map(color=>color.value).join(', ')}`}>
+    <span>{colors.length===1?'Color':`${colors.length} colores`}</span>
+    {colors.map(color=><i key={color.value} className={`${styles.swatch}${color.available?'':` ${styles.swatchOut}`}`} style={colorSwatch(color.value)?{background:colorSwatch(color.value)!}:undefined} title={`${color.value}${color.available?'':' (agotado)'}`}/>)}
+    <small>{colors.map(color=>color.value).join(' · ')}</small>
+   </p>;})()}
+   <p className={styles.variantName}>{[genderLabel(p.gender),productColor(p),p.details?.sizeRange||p.size&&`Talla ${p.details?.sizeRange||p.size}`].filter(Boolean).join(' · ')||p.name}</p>
    {group.dimensions.map(dimension=>{
     // En cascada: solo lo que existe con lo elegido antes (género → color → talla).
     const options=optionsFor(group,dimension,choice);
@@ -128,7 +133,7 @@ export function ProductGroupCard({group,products,packages=[]}:{group:ProductGrou
    </button>
    {!valid&&Math.floor(p.currentStock/packSize)>0&&<p className={styles.hint} role="status">{incomplete?'Falta verificar un paquete de tu carrito.':max<1?'Ya agregaste todas las existencias de esta opción.':`Escribe entre 1 y ${max} ${units}.`}</p>}
    {quantity>0&&<div className={styles.inCart}><span>{saleQuantityLabel(quantity,p)} de esta opción en tu carrito{currentRow?.total!=null?` · ${money(currentRow.total)}`:''}</span><button type="button" onClick={()=>change(-p.id,0)}>Quitar</button></div>}
-   {inGroup.length>1&&<p className={styles.hint}>En tu carrito: {inGroup.map(product=>`${saleQuantityLabel(lines.find(line=>line.id===-product.id)?.quantity||0,product)} ${[genderLabel(product.gender),product.color,product.size].filter(Boolean).join(' ')}`).join(' · ')}</p>}
+   {inGroup.length>1&&<p className={styles.hint}>En tu carrito: {inGroup.map(product=>`${saleQuantityLabel(lines.find(line=>line.id===-product.id)?.quantity||0,product)} ${[genderLabel(product.gender),productColor(product),product.size].filter(Boolean).join(' ')}`).join(' · ')}</p>}
   </div>
  </article>;
 }

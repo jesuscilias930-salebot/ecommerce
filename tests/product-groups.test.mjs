@@ -44,3 +44,17 @@ test('si dos productos coinciden en todo, se elige también el modelo', () => {
  assert.deepEqual(group.dimensions,['name']);
  assert.equal(resolveVariant(group,{name:'Caricatura B'}).id,2);
 });
+
+test('reconoce el color en el nombre cuando no viene de MerlynSeller', async () => {
+ const {colorFromName,productColor}=await import('../lib/product-groups.ts');
+ assert.equal(colorFromName('CALCETÍN DEPORTIVO BLANCO CABALLERO'),'Blanco');
+ assert.equal(colorFromName('Hoodie Essentials (Beige)'),'Beige');
+ assert.equal(colorFromName('Deportiva algodón · Azul marino'),'Azul marino');
+ assert.equal(colorFromName('Calcetín de caricatura'),'');
+ assert.equal(productColor({name:'TIN NEGRO',color:'Gris jaspe'}),'Gris jaspe');
+ const [group]=groupProducts([p(1,{name:'Tin liso negro',gender:'Hombre'}),p(2,{name:'Tin liso blanco',gender:'Hombre'})]);
+ assert.deepEqual(group.dimensions,['color']);
+ assert.deepEqual(optionsFor(group,'color',{}).map(o=>o.label),['Blanco','Negro']);
+ const {groupColors}=await import('../lib/product-groups.ts');
+ assert.deepEqual(groupColors(group).map(c=>c.value),['Blanco','Negro']);
+});

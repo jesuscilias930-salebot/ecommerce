@@ -16,7 +16,19 @@ const GENDERS:Record<string,string>={hombre:'Caballero',caballero:'Caballero',ma
 const GENDER_ORDER=['Dama','Caballero','Unisex','Niña','Niño','Infantil','Bebé niña','Bebé niño','Bebé'];
 /** Etiqueta de género para el cliente: Hombre → Caballero, Mujer → Dama. */
 export const genderLabel=(gender?:string|null)=>GENDERS[fold(gender)]||clean(gender);
-const valueOf=(product:Original,dimension:Dimension)=>dimension==='gender'?genderLabel(product.gender):dimension==='color'?clean(product.color):dimension==='size'?clean(product.details?.sizeRange||product.size):clean(product.name);
+// Colores que se reconocen en el nombre cuando MerlynSeller no envía el color.
+// Primero las frases de dos palabras para no confundir «azul marino» con «azul».
+const COLOR_WORDS=['azul marino','azul cielo','verde militar','gris jaspe','gris oxford','rosa pastel','negro','negra','blanco','blanca','gris','azul','marino','rojo','roja','rosa','fucsia','morado','morada','lila','verde','amarillo','amarilla','naranja','cafe','café','beige','crema','hueso','vino','guinda','mostaza','turquesa','coral','plata','dorado','dorada','multicolor','surtido','surtidos'];
+const title=(value:string)=>value.charAt(0).toLocaleUpperCase('es-MX')+value.slice(1);
+/** Color del nombre: «… CABALLERO NEGRO» → «Negro»; «Hoodie (Beige)» → «Beige». */
+export function colorFromName(name?:string|null):string{
+ const text=` ${fold(name).replace(/[()·,/-]/g,' ').replace(/\s+/g,' ')} `;
+ const found=COLOR_WORDS.find(word=>text.includes(` ${fold(word)} `));
+ return found?title(found.replace(/^cafe$/,'café')):'';
+}
+/** Color del producto: el de MerlynSeller y, si no hay, el que diga su nombre. */
+export const productColor=(product:Original)=>clean(product.color)||colorFromName(product.name);
+const valueOf=(product:Original,dimension:Dimension)=>dimension==='gender'?genderLabel(product.gender):dimension==='color'?productColor(product):dimension==='size'?clean(product.details?.sizeRange||product.size):clean(product.name);
 const naturalDesc=(a:string,b:string)=>b.localeCompare(a,'es',{numeric:true,sensitivity:'base'});
 const order=(dimension:Dimension,values:string[])=>dimension==='gender'
  ?[...values].sort((a,b)=>(GENDER_ORDER.indexOf(a)+1||99)-(GENDER_ORDER.indexOf(b)+1||99)||a.localeCompare(b,'es'))
@@ -91,3 +103,14 @@ export function reconcile(group:ProductGroup,choice:Choice,changed?:Dimension):C
 export const DIMENSION_LABELS:Record<Dimension,string>={gender:'Género',color:'Color',size:'Talla',name:'Modelo'};
 /** Texto de búsqueda de todo el grupo. */
 export const groupSearchText=(group:ProductGroup)=>[group.title,group.category,...group.products.flatMap(product=>[product.name,product.gender,genderLabel(product.gender),product.color,product.size,product.pricingGroup])].filter(Boolean).join(' ');
+
+/** Todos los colores del grupo (para mostrarlos de un vistazo en la ficha). */
+export function groupColors(group:ProductGroup){
+ const colors=new Map<string,{value:string;available:boolean}>();
+ for(const product of group.products){
+  const value=productColor(product);if(!value)continue;
+  const entry=colors.get(fold(value))||{value,available:false};
+  entry.available||=product.currentStock>0;colors.set(fold(value),entry);
+ }
+ return [...colors.values()].sort((a,b)=>a.value.localeCompare(b.value,'es'));
+}
