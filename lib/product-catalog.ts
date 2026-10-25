@@ -6,8 +6,9 @@ import { getStoreTenant } from './store-tenant';
 import { pricingKey } from './live-pricing';
 import {verifiedProductDetails,type ProductDetails} from './product-details';
 import {getCatalogDetails} from './catalog-details';
+import {getCatalogSections} from './catalog-sections';
 export type Tier={minQuantity:number;maxQuantity:number|null;pricePerUnit:number|string};
-export type Original = {composition?:string[];details?:ProductDetails;color?:string|null;model?:string|null;imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
+export type Original = {composition?:string[];details?:ProductDetails;color?:string|null;model?:string|null;imageUrls?:string[];imageUrl?:string|null; id:number; name:string; category?:string|null;categoryId?:number|null;section?:string|null;sectionOrder?:number|null; size?:string; gender?:string; pricingGroup?:string; currentStock:number;rules:Tier[]};
 export const isProductDemo=()=>process.env.STOREFRONT_PRODUCTS_MOCK==='true'||!process.env.SOCK_CONTROL_URL;
 const tiers=(price:number):Tier[]=>[{minQuantity:1,maxQuantity:49,pricePerUnit:price},{minQuantity:50,maxQuantity:99,pricePerUnit:price-2},{minQuantity:100,maxQuantity:null,pricePerUnit:price-4}];
 const mockProducts:Original[]=[
@@ -55,6 +56,8 @@ const withColor=(name:string,color?:string|null)=>{const value=(color||'').trim(
 export async function getOriginals():Promise<Original[]> {
  await getStoreTenant();
  if(isProductDemo())return mockProducts.map(p=>({...p,name:withColor(productDisplayName(p),p.color)}));
- const [products,rules,crm]:[Original[],Record<string,Tier[]>,Awaited<ReturnType<typeof getCatalogDetails>>]=await Promise.all([stockApi('/public/store/products/in-stock'),stockApi('/public/store/price-rules'),getCatalogDetails()]);
- return products.map(raw=>({...raw,...crm.get(raw.id)})).map(p=>({...p,details:verifiedProductDetails[p.id],imageUrls:[...(p.imageUrls||[]),...(verifiedProductDetails[p.id]?.photos?.map(photo=>photo.url)||[])],name:withColor(productDisplayName(p),p.color),rules:(rules[String(p.id)]||[]).filter(r=>r.minQuantity>0&&Number.isFinite(Number(r.pricePerUnit))).sort((a,b)=>a.minQuantity-b.minQuantity)}));
+ const [products,rules,crm,sections]:[Original[],Record<string,Tier[]>,Awaited<ReturnType<typeof getCatalogDetails>>,Awaited<ReturnType<typeof getCatalogSections>>]=await Promise.all([stockApi('/public/store/products/in-stock'),stockApi('/public/store/price-rules'),getCatalogDetails(),getCatalogSections()]);
+ // La sección viene de MerlynSeller → E-commerce → Categorías; junta varias categorías en una pestaña.
+ const sectionOf=(categoryId?:number|null)=>categoryId!=null?sections.get(categoryId):undefined;
+ return products.map(raw=>({...raw,...crm.get(raw.id),...(sectionOf(raw.categoryId)?{section:sectionOf(raw.categoryId)!.section,sectionOrder:sectionOf(raw.categoryId)!.position}:{})})).map(p=>({...p,details:verifiedProductDetails[p.id],imageUrls:[...(p.imageUrls||[]),...(verifiedProductDetails[p.id]?.photos?.map(photo=>photo.url)||[])],name:withColor(productDisplayName(p),p.color),rules:(rules[String(p.id)]||[]).filter(r=>r.minQuantity>0&&Number.isFinite(Number(r.pricePerUnit))).sort((a,b)=>a.minQuantity-b.minQuantity)}));
 }

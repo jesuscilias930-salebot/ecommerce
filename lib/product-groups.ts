@@ -7,7 +7,7 @@ import type {Original} from './product-catalog';
 
 export type Dimension='gender'|'color'|'size'|'name';
 export type Choice=Partial<Record<Dimension,string>>;
-export type ProductGroup<P extends Original=Original>={key:string;title:string;category:string;categoryId:number|null;byModel:boolean;products:P[];dimensions:Dimension[]};
+export type ProductGroup<P extends Original=Original>={key:string;title:string;category:string;categoryId:number|null;section?:string|null;sectionOrder?:number|null;byModel:boolean;products:P[];dimensions:Dimension[]};
 export type Option={value:string;label:string;available:boolean;stock:number};
 
 const clean=(value?:string|null)=>(value||'').trim().replace(/\s+/g,' ');
@@ -41,7 +41,7 @@ export function groupProducts<P extends Original>(products:P[]):ProductGroup<P>[
   const model=clean(product.model);
   const category=clean(product.category);
   const key=model?`model:${fold(model)}:${product.categoryId??fold(category)}`:product.categoryId!=null?`category:${product.categoryId}`:category?`category:${fold(category)}`:`product:${product.id}`;
-  const group=groups.get(key)||{key,title:model||category||clean(product.name),category:category||'Otros productos',categoryId:product.categoryId??null,byModel:Boolean(model),products:[],dimensions:[]};
+  const group=groups.get(key)||{key,title:model||category||clean(product.name),category:category||'Otros productos',categoryId:product.categoryId??null,section:product.section??null,sectionOrder:product.sectionOrder??null,byModel:Boolean(model),products:[],dimensions:[]};
   group.products.push(product);groups.set(key,group);
  }
  for(const group of groups.values()){
