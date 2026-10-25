@@ -33,6 +33,10 @@ export function Originals({
   const productGroups = groupProducts(products);
   const filtered = productGroups.filter(group => matchesSearch(groupSearchText(group), query));
   const categories = groupByCategory(filtered.map(group => ({...group, category: group.category})));
+  // «Todos» muestra cada categoría; al elegir una, las demás se ocultan.
+  const [selected, setSelected] = useState("all");
+  const active = categories.some(category => category.key === selected) ? selected : "all";
+  const shown = active === "all" ? categories : categories.filter(category => category.key === active);
   const categoryId = (key:string) => `products-${Array.from(key,c=>c.codePointAt(0)!.toString(16)).join('-')}`;
   return (
     <>
@@ -75,10 +79,11 @@ export function Originals({
         </span>
         <small>1. Elige cantidades · 2. Agrega al carrito · 3. Consulta tu tarifa</small>
       </div>
-      {categories.length>1&&<nav className={categoryStyles.navigation} aria-label="Ir a una categoría">
-        {categories.map(category=><a key={category.key} href={`#${categoryId(category.key)}`}>{category.label}<span>{category.products.length}</span></a>)}
+      {categories.length>1&&<nav className={categoryStyles.navigation} aria-label="Filtrar por categoría">
+        {[{key:"all",label:"Todos",count:filtered.length},...categories.map(category=>({key:category.key,label:category.label,count:category.products.length}))].map(option=>
+          <button key={option.key} type="button" aria-pressed={active===option.key} className={active===option.key?categoryStyles.active:undefined} onClick={()=>setSelected(option.key)}>{option.label}<span>{option.count}</span></button>)}
       </nav>}
-      {categories.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
+      {shown.map(category=><section className={categoryStyles.section} key={category.key} id={categoryId(category.key)} aria-labelledby={`${categoryId(category.key)}-title`}>
         <header className={categoryStyles.header}><h2 id={`${categoryId(category.key)}-title`}>{category.label}</h2><span>{category.products.length} {category.products.length===1?'producto':'productos'}</span></header>
         <div className="product-group-list">{category.products.map(group=><ProductGroupCard key={group.key} group={group} products={products} packages={packages}/>)}</div>
       </section>)}
